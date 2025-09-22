@@ -117,7 +117,7 @@ public class ChatUiCallbacks implements ChatListener {
     /** Handle "expression" data */
     private static void onExpression(JSONObject obj) {
         final String rawExpression = obj.optString("expression", "NEUTRAL");
-        Emotions.setMood(rawExpression, 3_000L);
+        Emotions.setMood(rawExpression, 1_000L);
     }
 
 }

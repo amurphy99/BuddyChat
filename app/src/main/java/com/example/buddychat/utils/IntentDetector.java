@@ -8,14 +8,17 @@ import android.util.Log;
 // Check an utterance for "intent" (yes/no)
 // =======================================================================
 // Allows us to trigger behaviors in Buddy depending on the results
+// The two modes ("MOVE_HEAD" | "POS_NRG") either move Buddy's head or set valence/arousal values to their face.
+// Gets called in: network.ws.ChatUiCallbacks
 public class IntentDetector {
-    private static final String TAG = "[DPU_IntentDetector]";
+    private static final String TAG  = "[DPU_IntentDetector]";
+    private static final String MODE = "MOVE_HEAD";  // "MOVE_HEAD" | "POS_NRG"
 
     // Types of results possible
     public enum Intent { AFFIRM, NEGATE, UNKNOWN }
 
     // Define "intent" phrases (use \s+ inside multi-word phrases)
-    private static final String AFFIRM_SRC = "yes|y(?:ep|ea?h)|sure|of\\s+course|absolutely|affirmative|correct|indeed|right";
+    private static final String AFFIRM_SRC = "yes|y(?:ep|ea?h)|sure|of\\s+course|absolutely|affirmative|correct|indeed|right|certainly";
     private static final String NEGATE_SRC = "no|nope|nah|negative|never|incorrect|wrong";
 
     // Allow leading spaces, then a match, then any punctuation/spaces
@@ -45,7 +48,7 @@ public class IntentDetector {
     // =======================================================================
     // Buddy-specific behavior controls
     // =======================================================================
-    /** Buddy-specific behavior controls
+    /** Buddy-specific behavior controls.
      * <br>
      * Two modes: <ol>
      *     <li> Tell the robot to nod its head yes or no. </li>
@@ -55,9 +58,18 @@ public class IntentDetector {
      */
     public static void IntentDetection(String s) {
         final Intent intent = classify(s);
-        Log.d(TAG, String.format("%s Detected intent: %s", TAG, intent));
+        Log.d(TAG, String.format("%s Detected intent: %s (%s response mode)", TAG, intent, MODE));
+        intentMode1(intent);
+    }
 
-        // Mode #2: Change the valence (positivity) & arousal (energy)
+    // Mode #1: Tell Buddy to shake their head 'no' or nod their head 'yes'
+    private static void intentMode1(Intent intent) {
+        if      (intent == Intent.AFFIRM) { HeadMotors2.nodYes (); }
+        else if (intent == Intent.NEGATE) { HeadMotors2.shakeNo(); }
+    }
+
+    // Mode #2: Change the valence (positivity) & arousal (energy)
+    private static void intentMode2(Intent intent) {
         if      (intent == Intent.AFFIRM) { Emotions.setPositivityEnergy(0.9F, 0.9F); }
         else if (intent == Intent.NEGATE) { Emotions.setPositivityEnergy(0.1F, 0.1F); }
         else                              { Emotions.setPositivityEnergy(0.5F, 0.5F); }
