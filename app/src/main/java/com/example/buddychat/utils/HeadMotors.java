@@ -14,19 +14,31 @@ import com.bfr.buddysdk.BuddySDK;
 // ToDo: Why can the speed be positive or negative? is that why it isn't working?
 // ToDo: BuddyNoMove
 // ToDo: The style of the old and new versions are still kind of clashing and need to be cleaned up
+// ToDo: Right now we are going to say that it is probably fine to "double toggle" a motor on...
+/** Move the head in "Yes" or "No" motions
+ * <br>
+ *
+ *
+ *
+ *
+ *
+ * */
 public class HeadMotors {
     private static final String TAG = "[DPU_HeadMotors]";
 
-    // Motion parameters (tune as needed)
-    private static final float  SPEED         =   5f;   // 0...~49, keep low
-    private static final float  DOWN_ANGLE    = -10f;   // degrees
-    private static final float  UP_ANGLE      =   5f;   // degrees
-    private static final float  HOME_ANGLE    =   0f;   // degrees
-    private static final long   SETTLE_MS     =  30L;   // small pause between steps
-    private static final int    MAX_RETRIES   =    2;
+    // Motion parameters (angles all in degrees)
+    private static final float   DOWN_ANGLE   = -10f;
+    private static final float     UP_ANGLE   =   5f;
+    private static final float   LEFT_ANGLE   = -10f;
+    private static final float  RIGHT_ANGLE   =  10f;
+    private static final float  HOME_ANGLE    =   0f;
+
+    private static final float  SPEED         =   5f;  // 0...~49, keep low
+    private static final long   SETTLE_MS     =  10L;  // Small pause between steps
+    private static final int    MAX_RETRIES   =    2;  // Number of times to retry the command
 
     // Simple state machine for a nod
-    private enum Step { DOWN, UP, HOME, DONE }
+    private enum Step { DOWN, UP, LEFT, RIGHT, HOME, DONE }
 
     // Dedicated motor thread (serialize commands, keep off UI)
     private static final HandlerThread motorThread = new HandlerThread("MotorBus");
@@ -53,7 +65,7 @@ public class HeadMotors {
     /** Toggle the head motors (Yes/No) off. */
     public static void StopMotors() { toggleYesMotor(false); toggleNoMotor(false); }
 
-    // ToDo: Right now we are going to say that it is probably fine to "double toggle" a motor on...
+
     // ToDo: Combine these two with the function at the bottom? Just for more informative logs
     public static void toggleYesMotor(boolean iEnable) {
         final String ogS = BuddySDK.Actuators.getYesStatus();
@@ -71,19 +83,43 @@ public class HeadMotors {
         });
     }
 
+    // Disable the Yes motor after a success or failure
+    private static void disableYesMove(boolean onFailure) {
+        final String caller = onFailure ? "failure" : "success";
+        BuddySDK.USB.enableYesMove(false, new IUsbCommadRsp.Stub() {
+            @Override public void onSuccess(String s) { Log.i(TAG, String.format("%s YES motor disabled after %s",             TAG, caller   )); }
+            @Override public void onFailed (String s) { Log.w(TAG, String.format("%s YES motor disable (after %s) failed: %s", TAG, caller, s)); }
+        });
+    }
+
     // -----------------------------------------------------------------------
     // Check if the specified motor is ready (check page 32 of the SDK guide)
     // -----------------------------------------------------------------------
-    // ToDo: Needs to also check for "SET" -- I think this might have been my issue
     // "DISABLE => Motor is disabled
     // "STOP"   => Motor is enabled
     // "SET"    => Motor is moving
     // "NONE"   => Default (what does that mean? maybe if the board isn't responding?)
     private static boolean motorEnabled(String type) {
-        if      (type.equals("YES")) { return BuddySDK.Actuators.getYesStatus().toUpperCase().contains("STOP"); }
-        else if (type.equals("NO" )) { return BuddySDK.Actuators.getNoStatus ().toUpperCase().contains("STOP"); }
+        if      (type.equals("YES")) { final String s = BuddySDK.Actuators.getYesStatus().toUpperCase(); return (s.contains("STOP") || s.contains("SET")); }
+        else if (type.equals("NO" )) { final String s = BuddySDK.Actuators.getNoStatus ().toUpperCase(); return (s.contains("STOP") || s.contains("SET")); }
         else { return false; }
     }
+
+
+    // =======================================================================
+    // Position Resets
+    // =======================================================================
+    // ToDo: IDK should integrate it with the rest of the code here better
+    public static void resetYesPosition() {
+        // Check if motor is activated, if so, try to move it to   BuddySDK.Actuators.getYesPosition())
+        final String yesStatus   = BuddySDK.Actuators.getYesStatus();
+        final float  yesPosition = BuddySDK.Actuators.getYesPosition();
+        Log.d(TAG, String.format("%s resetYesPosition() called (running=%s, eStop=%s, status=%s, pos=%s)", TAG, running, emergencyStopped, yesStatus, yesPosition));
+
+        if (running || emergencyStopped || (yesPosition == 0)) { Log.w(TAG, String.format("%s resetYesPosition() ignored", TAG)); }
+        else                                                   { running = true; motor.post(HeadMotors::resetYes);                }
+    }
+    private static void resetYes() { toggleYesMotor(true); startYesStep(Step.HOME, 0); }
 
 
 
@@ -96,17 +132,7 @@ public class HeadMotors {
         else                             { running = true; motor.post(HeadMotors::enableAndStartYesSequence);                                       }
     }
 
-    // ToDo: IDK should integrate it with the rest of the code here better
-    public static void resetYesPosition() {
-        // Check if motor is activated, if so, try to move it to   BuddySDK.Actuators.getYesPosition())
-        final String yesStatus   = BuddySDK.Actuators.getYesStatus();
-        final float  yesPosition = BuddySDK.Actuators.getYesPosition();
-        Log.d(TAG, String.format("%s resetYesPosition() called (running=%s, eStop=%s, status=%s, pos=%s)", TAG, running, emergencyStopped, yesStatus, yesPosition));
 
-        if (running || emergencyStopped || (yesPosition == 0)) { Log.w(TAG, String.format("%s resetYesPosition() ignored", TAG)); }
-        else                                                   { running = true; motor.post(HeadMotors::resetYes);                }
-    }
-    private static void resetYes() { toggleYesMotor(true); startYesStep(Step.HOME, 0); }
 
 
     // -----------------------------------------------------------------------
@@ -142,7 +168,7 @@ public class HeadMotors {
     /** Single command -> waits for its own onSuccess, then schedules the next step. */
     private static void issueYesMove(float speed, float angle, Step step, int retries) {
         BuddySDK.USB.buddySayYes(speed, angle, new IUsbCommadRsp.Stub() {
-            @Override public void onSuccess(String success) { Log.i(TAG, String.format("%s IDK yes response: %s", TAG, success));
+            @Override public void onSuccess(String success) {
                 // When it succeeds, we should give the controller moment to settle, then move on to next step
                 if (success.equals("YES_MOVE_FINISHED")) {
                     Log.i(TAG, String.format("%s buddySayYes Success (step: %s, angle: %.1f)", TAG, step, angle));
@@ -157,27 +183,18 @@ public class HeadMotors {
         });
     }
 
-    // Disable the Yes motor after a success or failure
-    private static void disableYesMove(boolean onFailure) {
-        final String caller = onFailure ? "failure" : "success";
-        BuddySDK.USB.enableYesMove(false, new IUsbCommadRsp.Stub() {
-            @Override public void onSuccess(String s) { Log.i(TAG, String.format("%s YES motor disabled after %s",             TAG, caller   )); }
-            @Override public void onFailed (String s) { Log.w(TAG, String.format("%s YES motor disable (after %s) failed: %s", TAG, caller, s)); }
-        });
-    }
+
 
     // Get the next step to do
     private static Step next(Step s) {
         switch (s) {
-            case DOWN: return Step.UP;
-            case UP  : return Step.HOME;
-            default  : return Step.DONE;
+            case DOWN  : return Step.UP;
+            case LEFT  : return Step.RIGHT;
+            case UP    :
+            case RIGHT : return Step.HOME;
+            default    : return Step.DONE;
         }
     }
-
-
-
-
 
 
 }

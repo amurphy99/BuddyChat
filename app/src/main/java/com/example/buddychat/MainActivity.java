@@ -25,6 +25,7 @@ import com.example.buddychat.utils.AudioTracking;
 import com.example.buddychat.utils.Emotions;
 import com.example.buddychat.utils.RotateBody;
 import com.example.buddychat.utils.HeadMotors;
+import com.example.buddychat.utils.HeadMotors2;
 
 // BuddySDK.Speech wrappers
 import com.example.buddychat.stt.STTCallbacks;
@@ -75,8 +76,8 @@ public class MainActivity extends BuddyActivity {
         Log.i("TEST", "-------------- App running --------------");
         Log.i(TAG, String.format("%s <========== onCreate ==========>", TAG));
 
-        // Setup UI
-        initializeUI(); wireButtons();
+        // Setup UI (on the robot it makes sense to wait for the SDK, but not for local testing...)
+        // initializeUI(); wireButtons();
 
         // WebSocket callback object
         chatCallbacks = new ChatUiCallbacks(botView, buttonStartEnd, running -> isRunning = running);
@@ -99,6 +100,9 @@ public class MainActivity extends BuddyActivity {
     public void onSDKReady() {
         Log.i("SDK", "-------------- Buddy SDK ready --------------");
 
+        // Setup UI
+        initializeUI(); wireButtons();
+
         // Transfer the touch information to BuddyCore in the background
         BuddySDK.UI.setViewAsFace(findViewById(R.id.view_face));
 
@@ -106,12 +110,11 @@ public class MainActivity extends BuddyActivity {
         BuddyTTS.init(getApplicationContext());
         BuddySTT.init(this, Locale.ENGLISH, Engine.CERENCE_FREE, true);
 
-        // Call an initial emotion to show (resets back to NEUTRAL)
-        Emotions.setMood(FacialExpression.HAPPY, 2_000L);
-
-        // Setup AudioTracking & HeadMotors
+        // Setup AudioTracking & HeadMotors (right now it starts after Buddy first talks)
         AudioTracking.setupSensors(); // ToDo: Move the callback starting to happen with the WS on/off
-        //AudioTracking.toggleUsbCallback();
+
+        // Call an initial emotion to show (I want it to be "sleepy" until we start our chat...)
+        Emotions.setMood(FacialExpression.TIRED);
     }
 
     // ====================================================================
@@ -119,33 +122,18 @@ public class MainActivity extends BuddyActivity {
     // ====================================================================
     // The wheels example project had onStop and onDestroy disable the wheels...
     // I'm doing the emergency stop here too. That function disables the wheels at the end.
+    // If we set onDestroy back up, only release our own stuff inside it, nothing SDK related
     @Override public void onPause() {
         super.onPause(); Log.i(TAG, String.format("%s <========== onPause ==========>", TAG));
-        //RotateBody.StopMotors();
-        //HeadMotors.StopMotors();
-
         //Emotions.cancelPendingReset();
         //AudioTracking.toggleTracking(false);
 
         // 2) unregister callbacks BEFORE any vendor command
         //try { BuddySDK.USB.unRegisterCb(AudioTracking.usbCallback); } catch (Exception ignored) {}
-
     }
 
-    @Override public void onResume () {
-        super.onResume ();
-        Log.i(TAG, String.format("%s <========== onResume ==========>", TAG));
-    }
-
-    // Do NOT call enable/disable motors here.
-    //@Override public void onStop   () {super.onStop   (); Log.i(TAG, String.format("%s <========== onStop ==========>", TAG));}
-
-    // Only release our own resources here (handlers, queues, etc.)
-    @Override public void onDestroy() {
-        super.onDestroy(); Log.i(TAG, String.format("%s <========== onDestroy ==========>", TAG));
-        //RotateBody.StopMotors();
-        //HeadMotors.StopMotors();
-    }
+    @Override public void onResume () { super.onResume (); Log.i(TAG, String.format("%s <========== onResume ==========>",  TAG));}
+    @Override public void onDestroy() { super.onDestroy(); Log.i(TAG, String.format("%s <========== onDestroy ==========>", TAG));}
 
 
     // ====================================================================
@@ -169,10 +157,19 @@ public class MainActivity extends BuddyActivity {
         // Start or end the chat/backend websocket connection
         buttonStartEnd.setOnClickListener(v -> {
             Log.w(TAG, String.format("%s StartEnd Button pressed", TAG));
-            if (!isRunning) { chat.connect(authToken, chatCallbacks); } else { chat.endChat(); }
+            // Start the chat & "wake" Buddy up (will reset to neutral)
+            if (!isRunning) {
+                chat.connect(authToken, chatCallbacks);
+                Emotions.setMood(FacialExpression.HAPPY, 1_000L);
+            }
+            // End the chat & put Buddy back to "sleep"
+            else {
+                chat.endChat();
+                Emotions.setMood(FacialExpression.TIRED);
+            }
 
+            // These work for both ways
             BuddyTTS.toggle(); BuddySTT.toggle(sttCallbacks);
-
             Toast.makeText(this, (isRunning ? "Chat connected; STT & TTS started.": "Chat ended; STT & TTS paused."), Toast.LENGTH_LONG).show();
         });
 
@@ -182,35 +179,36 @@ public class MainActivity extends BuddyActivity {
         // Testing Button #1: Trigger features to be tested
         buttonTester1.setOnClickListener(v -> {
             Log.w(TAG, String.format("%s Testing Button #1 pressed.", TAG));
-            HeadMotors.getHeadMotorStatus();
+            Emotions.setMood(FacialExpression.HAPPY, 2_000L);
 
-            HeadMotors.nodYes();
+            //HeadMotors.getHeadMotorStatus();
+            //HeadMotors.nodYes();
 
-            Emotions.setMood(FacialExpression.SURPRISED, 2_000L);
+            HeadMotors2.logHeadMotorStatus();
+            HeadMotors2.nodYes();
 
-            HeadMotors.getHeadMotorStatus();
         });
 
         // Testing Button #3: Trigger more features
         buttonTester3.setOnClickListener(v -> {
             Log.w(TAG, String.format("%s Testing Button #3 pressed.", TAG));
-            HeadMotors.getHeadMotorStatus();
-
-            HeadMotors.resetYesPosition(); // Reset Yes motor to position 0
-
             Emotions.setMood(FacialExpression.SAD, 2_000L);
 
-            HeadMotors.getHeadMotorStatus();
-        });
+            //HeadMotors.getHeadMotorStatus();
+            //HeadMotors.resetYesPosition(); // Reset Yes motor to position 0
 
+            HeadMotors2.logHeadMotorStatus();
+            HeadMotors2.resetYes();
+        });
 
 
 
         // Testing Button #2: Emergency stop any motors/movements
         buttonTester2.setOnClickListener(v -> {
             Log.w(TAG, String.format("%s !!! Emergency Stop Button Activated !!! -------", TAG));
-            RotateBody.StopMotors(); RotateBody.emergencyStopped = true;
-            HeadMotors.StopMotors(); HeadMotors.emergencyStopped = true;
+            //RotateBody.StopMotors(); RotateBody.emergencyStopped = true;
+            //HeadMotors.StopMotors(); HeadMotors.emergencyStopped = true;
+            HeadMotors2.stopAll();
         });
 
     }
