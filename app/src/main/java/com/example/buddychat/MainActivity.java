@@ -73,8 +73,7 @@ public class MainActivity extends BuddyActivity {
         // Setup the app & layout
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        Log.i("TEST", "-------------- App running --------------");
-        Log.i(TAG, String.format("%s <========== onCreate ==========>", TAG));
+        Log.i(TAG, String.format("%s <==================== onCreate ====================>", TAG));
 
         // Setup UI (on the robot it makes sense to wait for the SDK, but not for local testing...)
         // initializeUI(); wireButtons();
@@ -123,17 +122,17 @@ public class MainActivity extends BuddyActivity {
     // The wheels example project had onStop and onDestroy disable the wheels...
     // I'm doing the emergency stop here too. That function disables the wheels at the end.
     // If we set onDestroy back up, only release our own stuff inside it, nothing SDK related
-    @Override public void onPause() {
-        super.onPause(); Log.i(TAG, String.format("%s <========== onPause ==========>", TAG));
+    //@Override public void onPause() {
+        //super.onPause(); Log.i(TAG, String.format("%s <========== onPause ==========>", TAG));
         //Emotions.cancelPendingReset();
         //AudioTracking.toggleTracking(false);
 
         // 2) unregister callbacks BEFORE any vendor command
         //try { BuddySDK.USB.unRegisterCb(AudioTracking.usbCallback); } catch (Exception ignored) {}
-    }
+    //}
 
-    @Override public void onResume () { super.onResume (); Log.i(TAG, String.format("%s <========== onResume ==========>",  TAG));}
-    @Override public void onDestroy() { super.onDestroy(); Log.i(TAG, String.format("%s <========== onDestroy ==========>", TAG));}
+    //@Override public void onResume () { super.onResume (); Log.i(TAG, String.format("%s <========== onResume ==========>",  TAG));}
+    //@Override public void onDestroy() { super.onDestroy(); Log.i(TAG, String.format("%s <========== onDestroy ==========>", TAG));}
 
 
     // ====================================================================
@@ -179,7 +178,7 @@ public class MainActivity extends BuddyActivity {
         // Testing Button #1: Trigger features to be tested
         buttonTester1.setOnClickListener(v -> {
             Log.w(TAG, String.format("%s Testing Button #1 pressed.", TAG));
-            Emotions.setMood(FacialExpression.HAPPY, 2_000L);
+            Emotions.setMood(FacialExpression.SURPRISED, 2_000L);
 
             //HeadMotors.getHeadMotorStatus();
             //HeadMotors.nodYes();
@@ -199,6 +198,7 @@ public class MainActivity extends BuddyActivity {
 
             HeadMotors2.logHeadMotorStatus();
             HeadMotors2.resetYes();
+            HeadMotors2.resetNo ();
         });
 
 
