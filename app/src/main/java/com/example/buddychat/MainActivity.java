@@ -75,8 +75,8 @@ public class MainActivity extends BuddyActivity {
         setContentView(R.layout.activity_main);
         Log.i(TAG, String.format("%s <==================== onCreate ====================>", TAG));
 
-        // Setup UI (on the robot it makes sense to wait for the SDK, but not for local testing...)
-        // initializeUI(); wireButtons();
+        // Setup UI 
+        initializeUI(); wireButtons();
 
         // WebSocket callback object
         chatCallbacks = new ChatUiCallbacks(botView, buttonStartEnd, running -> isRunning = running);
@@ -98,9 +98,6 @@ public class MainActivity extends BuddyActivity {
     @Override
     public void onSDKReady() {
         Log.i("SDK", "-------------- Buddy SDK ready --------------");
-
-        // Setup UI
-        initializeUI(); wireButtons();
 
         // Transfer the touch information to BuddyCore in the background
         BuddySDK.UI.setViewAsFace(findViewById(R.id.view_face));
