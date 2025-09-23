@@ -20,9 +20,6 @@ import com.bfr.buddysdk.BuddySDK;
 // AudioTracking
 // ====================================================================
 /** AudioTracking
- * <br>
- * (Right now there are two methods for this, but we probably will settle on using method #2 if it
- * works well in testing.)
  * <br><br>
  * We use a queue to help smooth the sensor reading out due to its' instability. When we make a
  * call to actually rotate buddy and use the queues value, we take the average and then clear the
@@ -30,26 +27,26 @@ import com.bfr.buddysdk.BuddySDK;
  * with that we know that the user was just speaking for at least a short period before the
  * detection event.
  * <br><br>
- * There are four important methods: <ul>
+ * There are three important methods: <ul>
  *   <li> setupSensors()       => Sets up the sensor module for the SDK
  *   <li> EnableUsbCallback()  => Registers a CB with the sensor module (reads sensor data)
  *   <li> DisableUsbCallback() => Unregisters the CB (no more data will be read)
- *   <li> rotateTowardsAudio() => Takes the average angle from the recent queue, rotates Buddy that direction
  * </ul>
  */
-public class AudioTracking {
+public final class AudioTracking {
     private static final String TAG = "[DPU_AudioTracking]";
+    private AudioTracking() {} // no instances
 
-    // Queue of recent values for the LocationAngle
+    // Rolling buffer of mic localization values (thread-safe)
     private static final AngleBuffer angleBuf = AngleBuffer.defaultAudio(/*capacity*/ 30);
 
-    // Public access to the current angle. Calculates the rolling average and clears the queue.
+    // Public access to the current angle. Calculates the circular mean of recent angles and clears the buffer.
     public static float getRecentAngle() { return angleBuf.averageCircularAndClear(); }
 
     // -----------------------------------------------------------------------
     // Setup Sensors
     // -----------------------------------------------------------------------
-    // Needs to be called after the SDK launches
+    /** Enable sensor module (call after SDK launch). */
     public static void setupSensors() {
         BuddySDK.USB.enableSensorModule(true, new IUsbCommadRsp.Stub() {
             @Override public void onSuccess(String s) { Log.i(TAG, "-------------- Enabled Sensors --------------");  }
@@ -58,16 +55,17 @@ public class AudioTracking {
     }
 
     // -----------------------------------------------------------------------
-    // Callback subscribes to USB sensor readings
+    // Subscribe to USB sensor readings (kept private; controlled via methods below)
     // -----------------------------------------------------------------------
+    // Only using the VocalData reading
     public static final IUsbAidlCbListener usbCallback = new IUsbAidlCbListener.Stub() {
-        @Override public void ReceiveMotorMotionData(MotorMotionData motorMotionData) throws RemoteException { }
-        @Override public void ReceiveMotorHeadData  (MotorHeadData   motorHeadData  ) throws RemoteException { }
-        @Override public void ReceiveHeadSensorData (HeadSensorData  headSensorData ) throws RemoteException { }
-        @Override public void ReceiveBodySensorData (BodySensorData  bodySensorData ) throws RemoteException { }
+        @Override public void ReceiveMotorMotionData(MotorMotionData d) throws RemoteException { }
+        @Override public void ReceiveMotorHeadData  (MotorHeadData   d) throws RemoteException { }
+        @Override public void ReceiveHeadSensorData (HeadSensorData  d) throws RemoteException { }
+        @Override public void ReceiveBodySensorData (BodySensorData  d) throws RemoteException { }
 
-        @Override public void ReceivedVocalData(VocalData vocalData) throws RemoteException {
-            angleBuf.push(vocalData.SoundSourceLocalisation);
+        @Override public void ReceivedVocalData(VocalData d) throws RemoteException {
+            angleBuf.push(d.SoundSourceLocalisation);
         }
     };
 
