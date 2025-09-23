@@ -24,7 +24,7 @@
     <uses-permission android:name="com.bfr.buddy.resource.HEAD" />
 
     <!-- Disabling this for now, we aren't going to use it probably..? -->
-    <!-- <uses-permission android:name="com.bfr.buddy.resource.WHEELS"  /> -->
+    <uses-permission android:name="com.bfr.buddy.resource.WHEELS"  />
 
     <application
         android:name="com.example.buddychat.MainApplication"
