@@ -94,7 +94,7 @@
         android:layout_height = "wrap_content"
         android:layout_marginTop="20dp"
 
-        android:text="@string/test_button3"
+        android:text="@string/test_button4"
         android:textAppearance = "@style/TextProfileBar"
         android:background     = "@color/buddy_dark"
 
