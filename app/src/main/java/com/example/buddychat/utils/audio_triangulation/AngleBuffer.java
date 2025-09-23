@@ -1,4 +1,4 @@
-package com.example.buddychat.utils;
+package com.example.buddychat.utils.audio_triangulation;
 
 import java.util.ArrayList;
 import java.util.List;

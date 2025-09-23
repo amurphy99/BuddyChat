@@ -21,10 +21,8 @@ import com.example.buddychat.network.ws.ChatSocketManager;
 import com.example.buddychat.network.ws.ChatUiCallbacks;
 
 // Buddy Features
-import com.example.buddychat.utils.AudioTracking;
+import com.example.buddychat.utils.audio_triangulation.AudioTracking;
 import com.example.buddychat.utils.Emotions;
-import com.example.buddychat.utils.RotateBody;
-import com.example.buddychat.utils.HeadMotors;
 import com.example.buddychat.utils.HeadMotors2;
 
 // BuddySDK.Speech wrappers
@@ -75,7 +73,7 @@ public class MainActivity extends BuddyActivity {
         setContentView(R.layout.activity_main);
         Log.i(TAG, String.format("%s <==================== onCreate ====================>", TAG));
 
-        // Setup UI 
+        // Setup UI
         initializeUI(); wireButtons();
 
         // WebSocket callback object

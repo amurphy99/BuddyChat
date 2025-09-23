@@ -7,7 +7,7 @@ import com.bfr.buddy.speech.shared.ITTSCallback;
 import com.bfr.buddy.ui.shared.FacialExpression;
 import com.bfr.buddysdk.BuddySDK;
 
-import com.example.buddychat.utils.AudioTracking;
+import com.example.buddychat.utils.audio_triangulation.AudioTracking;
 import com.example.buddychat.utils.Emotions;
 
 // ====================================================================

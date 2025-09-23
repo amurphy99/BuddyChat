@@ -1,4 +1,4 @@
-package com.example.buddychat.utils;
+package com.example.buddychat.utils.audio_triangulation;
 
 import android.os.RemoteException;
 import android.util.Log;
