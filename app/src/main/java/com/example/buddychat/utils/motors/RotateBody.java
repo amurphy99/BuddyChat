@@ -1,4 +1,4 @@
-package com.example.buddychat.utils;
+package com.example.buddychat.utils.motors;
 
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -106,7 +106,7 @@ public final class RotateBody {
         BuddySDK.USB.enableWheels(false, new LogCb("DISABLE wheels on StopMotors" ));
     }
 
-    /** Clean shutdown for app exit. ToDo: Maybe would go in like onDestroy, etc., IDK... */
+    /** Clean shutdown for app exit. ToDo: Maybe would go in onDestroy, etc., IDK... */
     public static void shutdown() {
         drive.post(() -> BuddySDK.USB.enableWheels(false, new LogCb("DISABLE wheels (shutdown)")));
         driveThread.quitSafely();
