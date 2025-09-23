@@ -32,17 +32,14 @@ import com.example.buddychat.tts.BuddyTTS;
 import com.example.buddychat.stt.BuddySTT;
 import com.example.buddychat.stt.BuddySTT.Engine;
 
-// ====================================================================
+// =======================================================================
 // Main Activity of the app; runs on startup
-// ====================================================================
+// =======================================================================
 // In the official examples when running on the BuddyRobot, we need to
 // overlay the interface of this app on top of the core application. In
 // the examples they have code setup to relay clicks from our app UI to
 // whatever is below it.
 public class MainActivity extends BuddyActivity {
-    // --------------------------------------------------------------------
-    // Persistent variables
-    // --------------------------------------------------------------------
     private static final String TAG = "[DPU_Main]";
 
     // UI References
@@ -65,27 +62,24 @@ public class MainActivity extends BuddyActivity {
     private          ChatUiCallbacks   chatCallbacks;
     private          STTCallbacks      sttCallbacks;
 
-    // ====================================================================
+    // =======================================================================
     // Startup code
-    // ====================================================================
+    // =======================================================================
     // I don't know if maybe all of this should just go into the onSDKReady() function...
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    @Override protected void onCreate(Bundle savedInstanceState) {
         // Setup the app & layout
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
         Log.i(TAG, String.format("%s <==================== onCreate ====================>", TAG));
 
         // Setup UI
+        setContentView(R.layout.activity_main);
         initializeUI(); wireButtons();
 
-        // WebSocket callback object
+        // WebSocket & STT callback objects (we pass the STT callback some things here like UI references, etc.)
         chatCallbacks = new ChatUiCallbacks(botView, buttonStartEnd, running -> isRunning = running);
+        sttCallbacks  = new STTCallbacks(userView, testView1, chat::sendString);
 
-        // STT callback object (we can pass it stuff here, like the textView)
-        sttCallbacks = new STTCallbacks(userView, testView1, chat::sendString);
-
-        // Login, set auth tokens, and fetch the profile. ToDo: Could also use this to set the profile information here...
+        // Login, set auth tokens, and fetch the profile. ToDo: Could also use this in the future to set profile information...
         final LoginAndProfile loginAndProfile = new LoginAndProfile(textUserInfo, botView);
         loginAndProfile.doLoginAndProfile(new AuthListener() {
             @Override public void onSuccess(String    token) { authToken = token; }
@@ -93,12 +87,11 @@ public class MainActivity extends BuddyActivity {
         });
     }
 
-    // ====================================================================
+    // =======================================================================
     // Called when the BuddyRobot SDK is ready
-    // ====================================================================
-    @Override
-    public void onSDKReady() {
-        Log.i("SDK", "-------------- Buddy SDK ready --------------");
+    // =======================================================================
+    @Override public void onSDKReady() {
+        Log.i(TAG, "-------------- Buddy SDK ready --------------");
 
         // Transfer the touch information to BuddyCore in the background
         BuddySDK.UI.setViewAsFace(findViewById(R.id.view_face));
@@ -114,28 +107,56 @@ public class MainActivity extends BuddyActivity {
         Emotions.setMood(FacialExpression.TIRED);
     }
 
-    // ====================================================================
+    // -----------------------------------------------------------------------
     // App Behavior
-    // ====================================================================
+    // -----------------------------------------------------------------------
+    // ToDo: I have no idea how much of this, if any, is required..
+    // ToDo: MAYBE onDestroy() we should make sure to exit some of our threads for the motor movement?
     // The wheels example project had onStop and onDestroy disable the wheels...
     // I'm doing the emergency stop here too. That function disables the wheels at the end.
     // If we set onDestroy back up, only release our own stuff inside it, nothing SDK related
-    //@Override public void onPause() {
-        //super.onPause(); Log.i(TAG, String.format("%s <========== onPause ==========>", TAG));
-        //Emotions.cancelPendingReset();
-        //AudioTracking.toggleTracking(false);
-
-        // 2) unregister callbacks BEFORE any vendor command
-        //try { BuddySDK.USB.unRegisterCb(AudioTracking.usbCallback); } catch (Exception ignored) {}
-    //}
-
+    //@Override public void onPause  () { super.onPause  (); Log.i(TAG, String.format("%s <========== onPause ==========>",   TAG));}
     //@Override public void onResume () { super.onResume (); Log.i(TAG, String.format("%s <========== onResume ==========>",  TAG));}
     //@Override public void onDestroy() { super.onDestroy(); Log.i(TAG, String.format("%s <========== onDestroy ==========>", TAG));}
 
 
-    // ====================================================================
+    // =======================================================================
+    // Methods for starting/ending the chat
+    // =======================================================================
+    /** Toggle WebSocket connection & control "SLEEP" BehaviorInstruction (BI) */
+    public void toggleChat() {
+        if (!isRunning) { startChat(); } else { endChat(); }
+        Toast.makeText(this, (isRunning ? "Chat connected; STT & TTS started.": "Chat ended; STT & TTS paused."), Toast.LENGTH_LONG).show();
+    }
+
+    /** Start Chat. Two parts: 1) Wake up from "SLEEP" BI; 2) Connect to WebSocket. */
+    public void startChat() { if (isRunning) { return; }
+        // Make sure our token is set - ToDo: Could also check the refresh/timeout here (might need to...)
+        // ...
+
+        // 1) ToDo: Wake Buddy up from the "SLEEP" BI
+        Emotions.setMood(FacialExpression.HAPPY, 3_000L);
+
+        // 2) Connect to the backend through the WebSocket & toggle STT+TTS on
+        chat.connect(authToken, chatCallbacks);
+        BuddyTTS.toggle(); BuddySTT.toggle(sttCallbacks);
+        Log.i(TAG, String.format("%s Chat connected; STT & TTS started.", TAG));
+    }
+
+    /** End Chat. Two parts: 1) Disconnect WebSocket; 2) Set "SLEEP" BI. */
+    public void endChat() { if (!isRunning) { return; }
+        // 1) End the chat, disconnect from the backend, & toggle STT+TTS off
+        chat.endChat();
+        BuddyTTS.toggle(); BuddySTT.toggle(sttCallbacks);
+        Log.i(TAG, String.format("%s Chat ended; STT & TTS paused.", TAG));
+
+        // 2) ToDo: Set "SLEEP" BI
+        Emotions.setMood(FacialExpression.TIRED);
+    }
+
+    // =======================================================================
     // UI Elements
-    // ====================================================================
+    // =======================================================================
     /** Initialize UI element references */
     private void initializeUI() {
         textUserInfo   = findViewById(R.id.textUserInfo  );
@@ -153,27 +174,11 @@ public class MainActivity extends BuddyActivity {
     /** Set button listeners */
     private void wireButtons() {
         // Start or end the chat/backend websocket connection
-        buttonStartEnd.setOnClickListener(v -> {
-            Log.w(TAG, String.format("%s StartEnd Button pressed", TAG));
-            // Start the chat & "wake" Buddy up (will reset to neutral)
-            if (!isRunning) {
-                chat.connect(authToken, chatCallbacks);
-                Emotions.setMood(FacialExpression.HAPPY, 1_000L);
-            }
-            // End the chat & put Buddy back to "sleep"
-            else {
-                chat.endChat();
-                Emotions.setMood(FacialExpression.TIRED);
-            }
+        buttonStartEnd.setOnClickListener(v -> { Log.w(TAG, String.format("%s StartEnd Button pressed", TAG)); toggleChat(); });
 
-            // These work for both ways
-            BuddyTTS.toggle(); BuddySTT.toggle(sttCallbacks);
-            Toast.makeText(this, (isRunning ? "Chat connected; STT & TTS started.": "Chat ended; STT & TTS paused."), Toast.LENGTH_LONG).show();
-        });
-
-        // --------------------------------------------------------------------
+        // -----------------------------------------------------------------------
         // Testing Buttons
-        // --------------------------------------------------------------------
+        // -----------------------------------------------------------------------
         // Testing Button #1: Trigger "YES" nod
         buttonTester1.setOnClickListener(v -> {
             Log.w(TAG, String.format("%s Testing Button #1 pressed.", TAG));
@@ -181,7 +186,6 @@ public class MainActivity extends BuddyActivity {
 
             HeadMotors2.logHeadMotorStatus();
             HeadMotors2.nodYes();
-            HeadMotors2.logHeadMotorStatus(); // ToDo: I don't think these matter, I think they'll just execute before the move finishes...
         });
 
         // Testing Button #3: Reset head motor positions (X, Y)
@@ -196,7 +200,6 @@ public class MainActivity extends BuddyActivity {
             HeadMotors2.logHeadMotorStatus();
             HeadMotors2.resetYes();
             HeadMotors2.resetNo ();
-            HeadMotors2.logHeadMotorStatus();
         });
 
         // Testing Button #4: Test the wheels/rotation code
@@ -205,18 +208,17 @@ public class MainActivity extends BuddyActivity {
             Emotions.setMood(FacialExpression.LOVE, 2_000L);
 
             RotateBody.rotate(5, 10);
-
         });
 
-
-
+        // -----------------------------------------------------------------------
+        // Emergency Stop Motors
+        // -----------------------------------------------------------------------
         // Testing Button #2: Emergency stop any motors/movements
         buttonTester2.setOnClickListener(v -> {
             Log.w(TAG, String.format("%s !!! Emergency Stop Button Activated !!! -------", TAG));
             RotateBody.emergencyStopMotors();
             HeadMotors2.stopAll();
         });
-
     }
 
 }
