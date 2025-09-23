@@ -25,6 +25,7 @@ import com.example.buddychat.utils.motors.RotateBody;
 import com.example.buddychat.utils.audio_triangulation.AudioTracking;
 import com.example.buddychat.utils.Emotions;
 import com.example.buddychat.utils.HeadMotors2;
+import com.example.buddychat.utils.behavior.BehaviorTasks;
 
 // BuddySDK.Speech wrappers
 import com.example.buddychat.stt.STTCallbacks;
@@ -180,12 +181,22 @@ public class MainActivity extends BuddyActivity {
         // Testing Buttons
         // -----------------------------------------------------------------------
         // Testing Button #1: Trigger "YES" nod
+        // ToDo: If we are happy with the nodding, we can switch to testing the BIs
         buttonTester1.setOnClickListener(v -> {
             Log.w(TAG, String.format("%s Testing Button #1 pressed.", TAG));
             Emotions.setMood(FacialExpression.SURPRISED, 2_000L);
 
             HeadMotors2.logHeadMotorStatus();
             HeadMotors2.nodYes();
+
+            // ToDo: Testing for the BehaviorInstructions for Sleep and WakeUp... no idea what these will do
+            if (BehaviorTasks.isRunning) { BehaviorTasks.stopCurrentTask(); }
+            else {
+                Log.i(TAG, String.format("%s Starting BehaviorInstructions...", TAG));
+                //BehaviorTasks.startSleepTask(); 
+                //BehaviorTasks.startWakeUpTask();
+            }
+
         });
 
         // Testing Button #3: Reset head motor positions (X, Y)
