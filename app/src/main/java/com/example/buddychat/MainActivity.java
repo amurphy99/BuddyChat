@@ -21,6 +21,7 @@ import com.example.buddychat.network.ws.ChatSocketManager;
 import com.example.buddychat.network.ws.ChatUiCallbacks;
 
 // Buddy Features
+import com.example.buddychat.utils.motors.RotateBody;
 import com.example.buddychat.utils.audio_triangulation.AudioTracking;
 import com.example.buddychat.utils.Emotions;
 import com.example.buddychat.utils.HeadMotors2;
@@ -50,9 +51,11 @@ public class MainActivity extends BuddyActivity {
     private TextView botView;        // Display Buddy's most recent message
     private Button   buttonStartEnd; // Start or end the chat/backend websocket connection
 
+    // UI Elements for Development
     private Button   buttonTester1;  // [Development] Trigger features to be tested
     private Button   buttonTester2;  // [Development] Emergency stop any motors/movements
     private Button   buttonTester3;  // [Development] Trigger features to be tested
+    private Button   buttonTester4;  // [Development] Trigger features to be tested
     private TextView testView1;
 
     // WebSocket related
@@ -143,6 +146,7 @@ public class MainActivity extends BuddyActivity {
         buttonTester1  = findViewById(R.id.buttonTester1 );
         buttonTester2  = findViewById(R.id.buttonTester2 );
         buttonTester3  = findViewById(R.id.buttonTester3 );
+        buttonTester4  = findViewById(R.id.buttonTester4 );
         testView1      = findViewById(R.id.testView1     );
     }
 
@@ -170,30 +174,38 @@ public class MainActivity extends BuddyActivity {
         // --------------------------------------------------------------------
         // Testing Buttons
         // --------------------------------------------------------------------
-        // Testing Button #1: Trigger features to be tested
+        // Testing Button #1: Trigger "YES" nod
         buttonTester1.setOnClickListener(v -> {
             Log.w(TAG, String.format("%s Testing Button #1 pressed.", TAG));
             Emotions.setMood(FacialExpression.SURPRISED, 2_000L);
 
-            //HeadMotors.getHeadMotorStatus();
-            //HeadMotors.nodYes();
-
             HeadMotors2.logHeadMotorStatus();
             HeadMotors2.nodYes();
-
+            HeadMotors2.logHeadMotorStatus(); // ToDo: I don't think these matter, I think they'll just execute before the move finishes...
         });
 
-        // Testing Button #3: Trigger more features
+        // Testing Button #3: Reset head motor positions (X, Y)
+        // ToDo: I actually don't know if its okay to have them both running at hte same time?
+        // ToDo: The second one probably fails instantly because of the cooldown feature...
+        // ToDo: So something would need to be added here, maybe like the ability to "queue" movements up?
+        // ToDo: Also could just add a check within here and click it twice: if posX != 0: resetX(); if posY !=0: resetY();
         buttonTester3.setOnClickListener(v -> {
             Log.w(TAG, String.format("%s Testing Button #3 pressed.", TAG));
             Emotions.setMood(FacialExpression.SAD, 2_000L);
 
-            //HeadMotors.getHeadMotorStatus();
-            //HeadMotors.resetYesPosition(); // Reset Yes motor to position 0
-
             HeadMotors2.logHeadMotorStatus();
             HeadMotors2.resetYes();
             HeadMotors2.resetNo ();
+            HeadMotors2.logHeadMotorStatus();
+        });
+
+        // Testing Button #4: Test the wheels/rotation code
+        buttonTester4.setOnClickListener(v -> {
+            Log.w(TAG, String.format("%s Testing Button #4 pressed.", TAG));
+            Emotions.setMood(FacialExpression.LOVE, 2_000L);
+
+            RotateBody.rotate(5, 10);
+
         });
 
 
@@ -201,8 +213,7 @@ public class MainActivity extends BuddyActivity {
         // Testing Button #2: Emergency stop any motors/movements
         buttonTester2.setOnClickListener(v -> {
             Log.w(TAG, String.format("%s !!! Emergency Stop Button Activated !!! -------", TAG));
-            //RotateBody.StopMotors(); RotateBody.emergencyStopped = true;
-            //HeadMotors.StopMotors(); HeadMotors.emergencyStopped = true;
+            RotateBody.emergencyStopMotors();
             HeadMotors2.stopAll();
         });
 
