@@ -4,7 +4,7 @@ import java.util.regex.Pattern;
 
 import android.util.Log;
 
-import com.example.buddychat.utils.motors.HeadMotors2;
+import com.example.buddychat.utils.motors.HeadMotors;
 
 // =======================================================================
 // Check an utterance for "intent" (yes/no)
@@ -66,8 +66,8 @@ public class IntentDetector {
 
     // Mode #1: Tell Buddy to shake their head 'no' or nod their head 'yes'
     private static void intentMode1(Intent intent) {
-        if      (intent == Intent.AFFIRM) { HeadMotors2.nodYes (); }
-        else if (intent == Intent.NEGATE) { HeadMotors2.shakeNo(); }
+        if      (intent == Intent.AFFIRM) { HeadMotors.nodYes (); }
+        else if (intent == Intent.NEGATE) { HeadMotors.shakeNo(); }
     }
 
     // Mode #2: Change the valence (positivity) & arousal (energy)

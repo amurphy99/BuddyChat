@@ -12,7 +12,7 @@ import com.bfr.buddysdk.BuddySDK;
 // =======================================================================
 // YES motor => angles: (-45, 45),  speed: (-49.2, 49.2)
 //  NO motor => angles: ()
-public final class HeadMotors2 {
+public final class HeadMotors {
     private static final String TAG = "[DPU_HeadMotors]";
     private static final String RES = "RESET";
     private static final String SEQ = "SEQUENCE";

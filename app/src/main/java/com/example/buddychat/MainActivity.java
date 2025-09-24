@@ -24,7 +24,7 @@ import com.example.buddychat.network.ws.ChatUiCallbacks;
 import com.example.buddychat.utils.motors.RotateBody;
 import com.example.buddychat.utils.audio_triangulation.AudioTracking;
 import com.example.buddychat.utils.Emotions;
-import com.example.buddychat.utils.motors.HeadMotors2;
+import com.example.buddychat.utils.motors.HeadMotors;
 import com.example.buddychat.utils.behavior.BehaviorTasks;
 
 // BuddySDK.Speech wrappers
@@ -186,8 +186,8 @@ public class MainActivity extends BuddyActivity {
             Log.w(TAG, String.format("%s Testing Button #1 pressed.", TAG));
             Emotions.setMood(FacialExpression.SURPRISED, 2_000L);
 
-            HeadMotors2.logHeadMotorStatus();
-            HeadMotors2.nodYes();
+            HeadMotors.logHeadMotorStatus();
+            HeadMotors.nodYes();
 
             // ToDo: Testing for the BehaviorInstructions for Sleep and WakeUp... no idea what these will do
             if (BehaviorTasks.isRunning) { BehaviorTasks.stopCurrentTask(); }
@@ -208,9 +208,9 @@ public class MainActivity extends BuddyActivity {
             Log.w(TAG, String.format("%s Testing Button #3 pressed.", TAG));
             Emotions.setMood(FacialExpression.SAD, 2_000L);
 
-            HeadMotors2.logHeadMotorStatus();
-            HeadMotors2.resetYes();
-            HeadMotors2.resetNo ();
+            HeadMotors.logHeadMotorStatus();
+            HeadMotors.resetYes();
+            HeadMotors.resetNo ();
         });
 
         // Testing Button #4: Test the wheels/rotation code
@@ -228,7 +228,7 @@ public class MainActivity extends BuddyActivity {
         buttonTester2.setOnClickListener(v -> {
             Log.w(TAG, String.format("%s !!! Emergency Stop Button Activated !!! -------", TAG));
             RotateBody.emergencyStopMotors();
-            HeadMotors2.stopAll();
+            HeadMotors.stopAll();
         });
     }
 
