@@ -1,4 +1,4 @@
-package com.example.buddychat.utils;
+package com.example.buddychat.utils.behavior;
 
 import android.os.RemoteException;
 import android.os.Handler;

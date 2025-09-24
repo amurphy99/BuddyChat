@@ -8,7 +8,7 @@ import com.bfr.buddy.ui.shared.FacialExpression;
 import com.bfr.buddysdk.BuddySDK;
 
 import com.example.buddychat.utils.audio_triangulation.AudioTracking;
-import com.example.buddychat.utils.Emotions;
+import com.example.buddychat.utils.behavior.Emotions;
 
 // ====================================================================
 // Wrapper class around BuddySDK.Speech for Text-to-Speech

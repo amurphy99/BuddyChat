@@ -1,4 +1,4 @@
-package com.example.buddychat.utils;
+package com.example.buddychat.utils.behavior;
 
 import java.util.regex.Pattern;
 

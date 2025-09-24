@@ -23,7 +23,7 @@ import com.example.buddychat.network.ws.ChatUiCallbacks;
 // Buddy Features
 import com.example.buddychat.utils.motors.RotateBody;
 import com.example.buddychat.utils.audio_triangulation.AudioTracking;
-import com.example.buddychat.utils.Emotions;
+import com.example.buddychat.utils.behavior.Emotions;
 import com.example.buddychat.utils.motors.HeadMotors;
 import com.example.buddychat.utils.behavior.BehaviorTasks;
 

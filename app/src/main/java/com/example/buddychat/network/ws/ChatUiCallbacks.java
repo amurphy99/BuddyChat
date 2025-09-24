@@ -17,8 +17,8 @@ import org.json.JSONException;
 import com.example.buddychat.tts.BuddyTTS;
 
 // Emotion Response Handling
-import com.example.buddychat.utils.Emotions;
-import com.example.buddychat.utils.IntentDetector;
+import com.example.buddychat.utils.behavior.Emotions;
+import com.example.buddychat.utils.behavior.IntentDetector;
 
 // =======================================================================
 // Handles the WebSocket responses

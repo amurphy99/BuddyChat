@@ -8,7 +8,7 @@ import android.widget.TextView;
 
 // App code
 import com.bfr.buddy.ui.shared.FacialExpression;
-import com.example.buddychat.utils.Emotions;
+import com.example.buddychat.utils.behavior.Emotions;
 import com.example.buddychat.utils.audio_triangulation.AudioTracking;
 import com.example.buddychat.utils.audio_triangulation.AngleBuckets;
 import com.example.buddychat.utils.audio_triangulation.AngleBuckets.Bucket;
