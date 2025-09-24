@@ -12,7 +12,7 @@ import com.bfr.buddy.ui.shared.FacialExpression;
 // ====================================================================
 // Facial Emotions
 // ====================================================================
-public class Emotions {
+public final class Emotions {
     private static final String TAG = "[DPU_Emotions]";
 
     private static final Handler  MAIN = new Handler(Looper.getMainLooper());

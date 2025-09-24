@@ -12,7 +12,7 @@ import com.example.buddychat.utils.motors.HeadMotors;
 // Allows us to trigger behaviors in Buddy depending on the results
 // The two modes ("MOVE_HEAD" | "POS_NRG") either move Buddy's head or set valence/arousal values to their face.
 // Gets called in: network.ws.ChatUiCallbacks
-public class IntentDetector {
+public final class IntentDetector {
     private static final String TAG  = "[DPU_IntentDetector]";
     private static final String MODE = "MOVE_HEAD";  // "MOVE_HEAD" | "POS_NRG"
 
