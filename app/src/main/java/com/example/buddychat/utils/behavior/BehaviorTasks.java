@@ -15,6 +15,7 @@ public final class BehaviorTasks {
 
     // Running state
     public static volatile boolean isRunning = false;
+    public static volatile String  biMode    = "";
 
     // Callback for our task (might sometimes have "onIntermediateResult" if specified in task creation)
     // ToDo: onCancel might be what happens when you call .stop()... so set the task to null there?
@@ -33,9 +34,11 @@ public final class BehaviorTasks {
     // -----------------------------------------------------------------------
     // Initialize / Start the "SLEEP" Task
     // -----------------------------------------------------------------------
+    // ToDo: Replace these with a single function that takes an argument: "Sleep" | "WakeUp"
     // Set the current task to "Sleep" & start it
     public static void startSleepTask() {
         if (biTask != null) { biTask.stop(); }
+        biMode = "Sleep";
         biTask = BuddySDK.Companion.createBICategoryTask("Sleep");
         biTask.start(biTaskCb);
     }
@@ -43,6 +46,7 @@ public final class BehaviorTasks {
     // Set the current task to "WakeUp" & start it
     public static void startWakeUpTask() {
         if (biTask != null) { biTask.stop(); }
+        biMode = "WakeUp";
         biTask = BuddySDK.Companion.createBICategoryTask("WakeUp");
         biTask.start(biTaskCb);
     }
@@ -50,7 +54,14 @@ public final class BehaviorTasks {
     // Cancel any current tasks
     public static void stopCurrentTask() {
         if (biTask != null) { biTask.stop(); biTask = null; }
-        isRunning = false;
+        isRunning = false; biMode = "";
+    }
+
+    // Toggle Sleep/WakeUp
+    public static void toggleSleepWakeUp() {
+        Log.i(TAG, String.format("%s Toggling BI (nullTask=%s, isRunning=%s, biMode=%s)", TAG, (biTask == null), isRunning, biMode));
+        if ((biMode.equals("WakeUp")) || (biTask == null) || (biMode.isEmpty())) { startSleepTask(); return; }
+        if ( biMode.equals("Sleep" )) { startWakeUpTask(); }
     }
 
 }

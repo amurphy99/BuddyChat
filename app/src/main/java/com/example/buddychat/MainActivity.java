@@ -54,6 +54,7 @@ public class MainActivity extends BuddyActivity {
     private Button   buttonTester2;  // [Development] Emergency stop any motors/movements
     private Button   buttonTester3;  // [Development] Trigger features to be tested
     private Button   buttonTester4;  // [Development] Trigger features to be tested
+    private Button   buttonTester5;  // [Development] Trigger features to be tested
     private TextView testView1;
 
     // WebSocket related
@@ -169,6 +170,7 @@ public class MainActivity extends BuddyActivity {
         buttonTester2  = findViewById(R.id.buttonTester2 );
         buttonTester3  = findViewById(R.id.buttonTester3 );
         buttonTester4  = findViewById(R.id.buttonTester4 );
+        buttonTester5  = findViewById(R.id.buttonTester5 );
         testView1      = findViewById(R.id.testView1     );
     }
 
@@ -181,7 +183,6 @@ public class MainActivity extends BuddyActivity {
         // Testing Buttons
         // -----------------------------------------------------------------------
         // Testing Button #1: Trigger "YES" nod
-        // ToDo: If we are happy with the nodding, we can switch to testing the BIs
         buttonTester1.setOnClickListener(v -> {
             Log.w(TAG, String.format("%s Testing Button #1 pressed.", TAG));
             Emotions.setMood(FacialExpression.SURPRISED, 2_000L);
@@ -189,13 +190,7 @@ public class MainActivity extends BuddyActivity {
             HeadMotors.logHeadMotorStatus();
             HeadMotors.nodYes();
 
-            // ToDo: Testing for the BehaviorInstructions for Sleep and WakeUp... no idea what these will do
-            if (BehaviorTasks.isRunning) { BehaviorTasks.stopCurrentTask(); }
-            else {
-                Log.i(TAG, String.format("%s Starting BehaviorInstructions...", TAG));
-                //BehaviorTasks.startSleepTask();
-                //BehaviorTasks.startWakeUpTask();
-            }
+
 
         });
 
@@ -218,7 +213,18 @@ public class MainActivity extends BuddyActivity {
             Log.w(TAG, String.format("%s Testing Button #4 pressed.", TAG));
             Emotions.setMood(FacialExpression.LOVE, 2_000L);
 
-            RotateBody.rotate(5, 10);
+            RotateBody.rotate(30, 360);
+        });
+
+        // Testing Button #5: ToDo: Testing for the BehaviorInstructions for Sleep and WakeUp... no idea what these will do
+        buttonTester5.setOnClickListener(v -> {
+            Log.w(TAG, String.format("%s Testing Button #5 pressed.", TAG));
+            
+            if (BehaviorTasks.isRunning) { BehaviorTasks.stopCurrentTask(); }
+            else {
+                BehaviorTasks.toggleSleepWakeUp();
+                //BehaviorTasks.startSleepTask(); BehaviorTasks.startWakeUpTask();
+            }
         });
 
         // -----------------------------------------------------------------------
