@@ -9,6 +9,7 @@ import android.widget.TextView;
 // App code
 import com.bfr.buddy.ui.shared.FacialExpression;
 import com.example.buddychat.utils.behavior.Emotions;
+import com.example.buddychat.utils.behavior.UserIntent;
 import com.example.buddychat.utils.audio_triangulation.AudioTracking;
 import com.example.buddychat.utils.audio_triangulation.AngleBuckets;
 import com.example.buddychat.utils.audio_triangulation.AngleBuckets.Bucket;
@@ -47,8 +48,12 @@ public class STTCallbacks implements STTListener {
         float  averageAngle = AudioTracking.getRecentAngle();
         Bucket bucket       = AngleBuckets.classify(averageAngle);
         String angleLabel   = AngleBuckets.label(bucket);
-        String logMsg = String.format("Audio Source: %s (angle=%.1f)", angleLabel, averageAngle);
 
+        // ToDo: User intent detection (for ending the chat)
+        boolean userEndChat = UserIntent.isEndChat(utterance);
+
+        // Logging
+        String logMsg = String.format("Audio Source: %s (angle=%.1f, endChat=%s)", angleLabel, averageAngle, userEndChat);
         Log.i(TAG, String.format("%s Recent Average %s", TAG, logMsg));
 
 
