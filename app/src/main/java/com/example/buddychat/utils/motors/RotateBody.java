@@ -45,14 +45,8 @@ public final class RotateBody {
         // Enable the motors; onSuccess => start the movement; onSuccess => disable the wheels
         drive.post(() -> {
             BuddySDK.USB.enableWheels(true, new IUsbCommadRsp.Stub() {
-                @Override public void onSuccess(String s) throws RemoteException {
-                    Log.d(TAG, String.format("%s ENABLE wheels for rotation SUCCESS: %s", TAG, s));
-                    issueRotation(speed, degrees);
-                }
-                @Override public void onFailed(String s) throws RemoteException {
-                    Log.w(TAG, String.format("%s ENABLE wheels for rotation FAIL: %s", TAG, s));
-                    running = false;
-                }
+                @Override public void onSuccess(String s) throws RemoteException { Log.d(TAG, String.format("%s ENABLE wheels for rotation SUCCESS: %s", TAG, s)); issueRotation(speed, degrees); }
+                @Override public void onFailed (String s) throws RemoteException { Log.w(TAG, String.format("%s ENABLE wheels for rotation FAIL: %s",    TAG, s)); running = false; }
             });
         });
     }
@@ -60,7 +54,11 @@ public final class RotateBody {
     /** Issue a rotation command to Buddy; disable the wheels again on completion. */
     private static void issueRotation(float speed, float degree) {
         BuddySDK.USB.rotateBuddy(speed, degree, new IUsbCommadRsp.Stub() {
-            @Override public void onSuccess(String s) { BuddySDK.USB.enableWheels(false, new LogCb("DISABLE wheels onSuccess")); running = false; }
+            @Override public void onSuccess(String s) {
+                if (s.equals("WHEEL_MOVE_FINISHED")) { // SDK method calls onSuccess twice: first with "OK" then again with this code
+                    BuddySDK.USB.enableWheels(false, new LogCb("DISABLE wheels onSuccess")); running = false;
+                }
+            }
             @Override public void onFailed (String s) { BuddySDK.USB.enableWheels(false, new LogCb("DISABLE wheels onFailed" )); running = false; }
         });
     }
