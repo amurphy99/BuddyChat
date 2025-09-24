@@ -24,7 +24,7 @@ import com.example.buddychat.network.ws.ChatUiCallbacks;
 import com.example.buddychat.utils.motors.RotateBody;
 import com.example.buddychat.utils.audio_triangulation.AudioTracking;
 import com.example.buddychat.utils.Emotions;
-import com.example.buddychat.utils.HeadMotors2;
+import com.example.buddychat.utils.motors.HeadMotors2;
 import com.example.buddychat.utils.behavior.BehaviorTasks;
 
 // BuddySDK.Speech wrappers
@@ -193,7 +193,7 @@ public class MainActivity extends BuddyActivity {
             if (BehaviorTasks.isRunning) { BehaviorTasks.stopCurrentTask(); }
             else {
                 Log.i(TAG, String.format("%s Starting BehaviorInstructions...", TAG));
-                //BehaviorTasks.startSleepTask(); 
+                //BehaviorTasks.startSleepTask();
                 //BehaviorTasks.startWakeUpTask();
             }
 

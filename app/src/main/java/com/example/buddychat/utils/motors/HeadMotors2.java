@@ -1,4 +1,4 @@
-package com.example.buddychat.utils;
+package com.example.buddychat.utils.motors;
 
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -92,8 +92,12 @@ public final class HeadMotors2 {
     );
 
     // =======================================================================
-    // Public: status helpers
+    // Public: Status Helpers (check page 32 of the SDK guide for codes)
     // =======================================================================
+    // "DISABLE => Motor is disabled
+    // "STOP"   => Motor is enabled
+    // "SET"    => Motor is moving
+    // "NONE"   => Default (what does that mean? maybe if the board isn't responding?)
     public static void logHeadMotorStatus() {
         final String y = "YES status=" + YES_OPS.status.call() + ", pos=" + YES_OPS.position.call();
         final String n =  "NO status=" +  NO_OPS.status.call() + ", pos=" +  NO_OPS.position.call();
