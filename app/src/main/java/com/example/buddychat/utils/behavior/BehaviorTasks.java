@@ -21,11 +21,11 @@ public final class BehaviorTasks {
     // ToDo: onCancel might be what happens when you call .stop()... so set the task to null there?
     // ToDo: isSleeping needs to change differently depending on which Task this is a Callback for...
     private static final TaskCallback biTaskCb = new TaskCallback() {
-        @Override public void onStarted(        ) { Log.d(TAG, String.format("%s onStarted()",       TAG   )); isRunning = true;  }
-        @Override public void onSuccess(String s) { Log.i(TAG, String.format("%s onSuccess() -> %s", TAG, s)); isRunning = false; }
-        @Override public void onCancel (        ) { Log.i(TAG, String.format("%s onCancel()",        TAG   )); isRunning = false; }
-        @Override public void onError  (String s) { Log.e(TAG, String.format("%s onError() -> %s",   TAG, s)); isRunning = false; }
-        @Override public void onIntermediateResult(String s) { Log.d(TAG, String.format("%s onIntermediateResult() -> %s", TAG, s)); }
+        @Override public void onStarted(        ) { Log.d(TAG, String.format("%s %s onStarted()",       TAG, biMode   )); isRunning = true;  }
+        @Override public void onSuccess(String s) { Log.i(TAG, String.format("%s %s onSuccess() -> %s", TAG, biMode, s)); isRunning = false; }
+        @Override public void onCancel (        ) { Log.i(TAG, String.format("%s %s onCancel()",        TAG, biMode   )); isRunning = false; }
+        @Override public void onError  (String s) { Log.e(TAG, String.format("%s %s onError() -> %s",   TAG, biMode, s)); isRunning = false; }
+        @Override public void onIntermediateResult(String s) { Log.d(TAG, String.format("%s %s onIntermediateResult() -> %s", TAG, biMode, s)); }
     };
 
     // Task pointer - ToDo: Would it be better to keep two tasks (one for Sleep, one for WakeUp) instead of re-creating them?
@@ -39,15 +39,16 @@ public final class BehaviorTasks {
     public static void startSleepTask() {
         if (biTask != null) { biTask.stop(); }
         biMode = "Sleep";
-        biTask = BuddySDK.Companion.createBICategoryTask("Sleep");
+        biTask = BuddySDK.Companion.createBICategoryTask("Sleep", null, null, true);
         biTask.start(biTaskCb);
     }
 
     // Set the current task to "WakeUp" & start it
     public static void startWakeUpTask() {
         if (biTask != null) { biTask.stop(); }
-        biMode = "WakeUp";
-        biTask = BuddySDK.Companion.createBICategoryTask("WakeUp");
+        biMode = "Wake";
+        //biTask = BuddySDK.Companion.createBICategoryTask("Wake");
+        biTask = BuddySDK.Companion.createBICategoryTask("Wake", null, null, true);
         biTask.start(biTaskCb);
     }
 
@@ -59,9 +60,9 @@ public final class BehaviorTasks {
 
     // Toggle Sleep/WakeUp
     public static void toggleSleepWakeUp() {
-        Log.i(TAG, String.format("%s Toggling BI (nullTask=%s, isRunning=%s, biMode=%s)", TAG, (biTask == null), isRunning, biMode));
-        if ((biMode.equals("WakeUp")) || (biTask == null) || (biMode.isEmpty())) { startSleepTask(); return; }
-        if ( biMode.equals("Sleep" )) { startWakeUpTask(); }
+        Log.i(TAG, String.format("%s Toggling BI (Current state: nullTask=%s, isRunning=%s, biMode=%s)", TAG, (biTask == null), isRunning, biMode));
+        if ((biMode.equals("Wake" )) || (biTask == null) || (biMode.isEmpty())) { startSleepTask(); return; }
+        if ( biMode.equals("Sleep")) { startWakeUpTask(); }
     }
 
 }
