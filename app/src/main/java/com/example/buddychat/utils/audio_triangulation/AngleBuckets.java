@@ -34,7 +34,7 @@ public final class AngleBuckets {
 
     /** Classify an absolute angle (0...360) into a bucket, using center=180, deadband=10, slight=30. */
     public static Bucket classify(float absoluteAngleDeg) {
-        return classify(absoluteAngleDeg, /*center*/180f, /*deadband*/10f, /*slight*/30f);
+        return classify(absoluteAngleDeg, /*center*/180f, /*deadband*/20f, /*slight*/50f);
     }
 
     /**

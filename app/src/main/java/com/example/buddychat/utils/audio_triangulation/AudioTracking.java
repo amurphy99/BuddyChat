@@ -38,7 +38,7 @@ public final class AudioTracking {
     private AudioTracking() {} // no instances
 
     // Rolling buffer of mic localization values (thread-safe)
-    private static final AngleBuffer angleBuf = AngleBuffer.defaultAudio(/*capacity*/ 30);
+    private static final AngleBuffer angleBuf = AngleBuffer.defaultAudio(/*capacity*/ 20);
 
     // Public access to the current angle. Calculates the circular mean of recent angles and clears the buffer.
     public static float getRecentAngle() { return angleBuf.averageCircularAndClear(); }
@@ -55,7 +55,7 @@ public final class AudioTracking {
     }
 
     // -----------------------------------------------------------------------
-    // Subscribe to USB sensor readings (kept private; controlled via methods below)
+    // Subscribe to USB sensor readings (page 48 of SDK user guide)
     // -----------------------------------------------------------------------
     // Only using the VocalData reading
     public static final IUsbAidlCbListener usbCallback = new IUsbAidlCbListener.Stub() {
