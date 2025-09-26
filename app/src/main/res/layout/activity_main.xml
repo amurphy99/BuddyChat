@@ -201,10 +201,10 @@
 
         app:layout_constraintStart_toStartOf = "parent"
         app:layout_constraintEnd_toEndOf     = "parent"
-        app:layout_constraintBottom_toTopOf  = "@id/botView"
+        app:layout_constraintBottom_toTopOf  = "parent"
         />
 
-    <!-- Robot's most recent message -->
+    <!-- Robot's most recent message [hidden] -->
     <TextView android:id="@+id/botView"
         android:layout_width  = "match_parent"
         android:layout_height = "wrap_content"
@@ -215,6 +215,7 @@
         android:text           = "@string/buddy_messages"
         android:textAppearance = "@style/TextWhiteShadow"
         android:background     = "@drawable/bubble_bot"
+        android:visibility="gone"
 
         android:textSize   = "18sp"
         android:padding    = "6dp"

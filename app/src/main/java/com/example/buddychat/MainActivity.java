@@ -106,7 +106,7 @@ public class MainActivity extends BuddyActivity {
         AudioTracking.setupSensors(); // ToDo: Move the callback starting to happen with the WS on/off
 
         // Call an initial emotion to show (I want it to be "sleepy" until we start our chat...)
-        Emotions.setMood(FacialExpression.TIRED);
+        //Emotions.setMood(FacialExpression.TIRED);
     }
 
     // -----------------------------------------------------------------------
@@ -153,7 +153,7 @@ public class MainActivity extends BuddyActivity {
         Log.i(TAG, String.format("%s Chat ended; STT & TTS paused.", TAG));
 
         // 2) ToDo: Set "SLEEP" BI
-        Emotions.setMood(FacialExpression.TIRED);
+        //Emotions.setMood(FacialExpression.TIRED);
     }
 
     // =======================================================================
@@ -189,9 +189,6 @@ public class MainActivity extends BuddyActivity {
 
             HeadMotors.logHeadMotorStatus();
             HeadMotors.nodYes();
-
-
-
         });
 
         // Testing Button #3: Reset head motor positions (X, Y)
@@ -208,23 +205,24 @@ public class MainActivity extends BuddyActivity {
             HeadMotors.resetNo ();
         });
 
-        // Testing Button #4: Test the wheels/rotation code
+        // Testing Button #4:
         buttonTester4.setOnClickListener(v -> {
-            Log.w(TAG, String.format("%s Testing Button #4 pressed.", TAG));
-            Emotions.setMood(FacialExpression.LOVE, 2_000L);
+            Log.w(TAG, String.format("%s Testing Button #4 pressed. (toggle Sleep behavior)", TAG));
 
-            RotateBody.rotate(30, 360);
+            //Emotions.setMood(FacialExpression.LOVE, 2_000L);
+            //RotateBody.rotate(30, 360);
+
+            // BehaviorTasks.toggleSleepWakeUp();
+            if (BehaviorTasks.isRunning) { BehaviorTasks.stopCurrentTask(); }
+            else                         { BehaviorTasks.startSleepTask (); }
         });
 
         // Testing Button #5: ToDo: Testing for the BehaviorInstructions for Sleep and WakeUp... no idea what these will do
         buttonTester5.setOnClickListener(v -> {
-            Log.w(TAG, String.format("%s Testing Button #5 pressed.", TAG));
-            
+            Log.w(TAG, String.format("%s Testing Button #5 pressed. (toggle Wake behavior)", TAG));
+
             if (BehaviorTasks.isRunning) { BehaviorTasks.stopCurrentTask(); }
-            else {
-                BehaviorTasks.toggleSleepWakeUp();
-                //BehaviorTasks.startSleepTask(); BehaviorTasks.startWakeUpTask();
-            }
+            else                         { BehaviorTasks.startWakeUpTask(); }
         });
 
         // -----------------------------------------------------------------------
