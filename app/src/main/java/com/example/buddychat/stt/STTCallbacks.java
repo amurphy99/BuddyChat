@@ -10,7 +10,7 @@ import android.widget.TextView;
 import com.bfr.buddy.ui.shared.FacialExpression;
 import com.example.buddychat.utils.behavior.Emotions;
 import com.example.buddychat.utils.behavior.UserIntent;
-import com.example.buddychat.utils.audio_triangulation.AudioTracking;
+import com.example.buddychat.utils.SensorListener;
 import com.example.buddychat.utils.audio_triangulation.AngleBuckets;
 import com.example.buddychat.utils.audio_triangulation.AngleBuckets.Bucket;
 
@@ -45,7 +45,7 @@ public class STTCallbacks implements STTListener {
         Emotions.setMood(FacialExpression.THINKING);
 
         // ToDo: Audio triangulation
-        float  averageAngle = AudioTracking.getRecentAngle();
+        float  averageAngle = SensorListener.getRecentAngle();
         Bucket bucket       = AngleBuckets.classify(averageAngle);
         String angleLabel   = AngleBuckets.label(bucket);
 

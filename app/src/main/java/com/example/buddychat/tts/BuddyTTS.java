@@ -7,7 +7,7 @@ import com.bfr.buddy.speech.shared.ITTSCallback;
 import com.bfr.buddy.ui.shared.FacialExpression;
 import com.bfr.buddysdk.BuddySDK;
 
-import com.example.buddychat.utils.audio_triangulation.AudioTracking;
+import com.example.buddychat.utils.SensorListener;
 import com.example.buddychat.utils.behavior.Emotions;
 
 // ====================================================================
@@ -62,7 +62,7 @@ public class BuddyTTS {
         if (!enabled      ) { Log.w(TAG, String.format("%s TTS not enabled."                          , TAG)); return; }
 
         // Disable AudioTracking while speaking
-        AudioTracking.DisableUsbCallback();
+        SensorListener.DisableUsbCallback();
         Emotions.setMood(FacialExpression.NEUTRAL);
 
         // Use BuddySDK Speech
@@ -76,7 +76,7 @@ public class BuddyTTS {
     }
     private static void speechCompleted(String s) {
         Log.d(TAG, String.format("%s Speech completed: %s", TAG, s));
-        AudioTracking.EnableUsbCallback();
+        SensorListener.EnableUsbCallback();
     }
 
     /** Stop current utterance if there is one */

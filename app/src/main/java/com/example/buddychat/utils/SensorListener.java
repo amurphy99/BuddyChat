@@ -1,4 +1,4 @@
-package com.example.buddychat.utils.audio_triangulation;
+package com.example.buddychat.utils;
 
 import android.os.RemoteException;
 import android.util.Log;
@@ -15,6 +15,7 @@ import com.bfr.buddy.usb.shared.MotorMotionData;
 import com.bfr.buddy.usb.shared.VocalData;
 
 import com.bfr.buddysdk.BuddySDK;
+import com.example.buddychat.utils.audio_triangulation.AngleBuffer;
 
 // ====================================================================
 // AudioTracking
@@ -33,9 +34,16 @@ import com.bfr.buddysdk.BuddySDK;
  *   <li> DisableUsbCallback() => Unregisters the CB (no more data will be read)
  * </ul>
  */
-public final class AudioTracking {
-    private static final String TAG = "[DPU_AudioTracking]";
-    private AudioTracking() {} // no instances
+public final class SensorListener {
+    private static final String TAG = "[DPU_SensorListener]";
+    private SensorListener() {} // no instances
+
+
+    // -----------------------------------------------------------------------
+    // Audio Handling
+    // -----------------------------------------------------------------------
+    // Boolean for handling whether or not we should be tracking the audio readings
+    public static volatile boolean trackAudio = true;
 
     // Rolling buffer of mic localization values (thread-safe)
     private static final AngleBuffer angleBuf = AngleBuffer.defaultAudio(/*capacity*/ 20);
@@ -61,9 +69,14 @@ public final class AudioTracking {
     public static final IUsbAidlCbListener usbCallback = new IUsbAidlCbListener.Stub() {
         @Override public void ReceiveMotorMotionData(MotorMotionData d) throws RemoteException { }
         @Override public void ReceiveMotorHeadData  (MotorHeadData   d) throws RemoteException { }
-        @Override public void ReceiveHeadSensorData (HeadSensorData  d) throws RemoteException { }
         @Override public void ReceiveBodySensorData (BodySensorData  d) throws RemoteException { }
 
+        // Head touch sensors
+        @Override public void ReceiveHeadSensorData (HeadSensorData  d) throws RemoteException {
+
+        }
+
+        //
         @Override public void ReceivedVocalData(VocalData d) throws RemoteException {
             angleBuf.push(d.SoundSourceLocalisation);
         }

@@ -22,7 +22,7 @@ import com.example.buddychat.network.ws.ChatUiCallbacks;
 
 // Buddy Features
 import com.example.buddychat.utils.motors.RotateBody;
-import com.example.buddychat.utils.audio_triangulation.AudioTracking;
+import com.example.buddychat.utils.SensorListener;
 import com.example.buddychat.utils.behavior.Emotions;
 import com.example.buddychat.utils.motors.HeadMotors;
 import com.example.buddychat.utils.behavior.BehaviorTasks;
@@ -103,7 +103,7 @@ public class MainActivity extends BuddyActivity {
         BuddySTT.init(this, Locale.ENGLISH, Engine.CERENCE_FREE, true);
 
         // Setup AudioTracking & HeadMotors (right now it starts after Buddy first talks)
-        AudioTracking.setupSensors(); // ToDo: Move the callback starting to happen with the WS on/off
+        SensorListener.setupSensors(); // ToDo: Move the callback starting to happen with the WS on/off
 
         // Call an initial emotion to show (I want it to be "sleepy" until we start our chat...)
         //Emotions.setMood(FacialExpression.TIRED);
