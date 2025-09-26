@@ -102,8 +102,9 @@ public class MainActivity extends BuddyActivity {
         BuddyTTS.init(getApplicationContext());
         BuddySTT.init(this, Locale.ENGLISH, Engine.CERENCE_FREE, true);
 
-        // Setup AudioTracking & HeadMotors (right now it starts after Buddy first talks)
-        SensorListener.setupSensors(); // ToDo: Move the callback starting to happen with the WS on/off
+        // Setup USB sensor listeners (AudioTracking is enabled after the first time Buddy talks)
+        SensorListener.setupSensors();
+        SensorListener.EnableUsbCallback();
 
         // Call an initial emotion to show (I want it to be "sleepy" until we start our chat...)
         //Emotions.setMood(FacialExpression.TIRED);
@@ -112,11 +113,11 @@ public class MainActivity extends BuddyActivity {
     // -----------------------------------------------------------------------
     // App Behavior
     // -----------------------------------------------------------------------
-    // ToDo: I have no idea how much of this, if any, is required..
+    // ToDo: Ignoring these methods until not having them causes an error!
+    // ToDo: If we set onDestroy back up, only release our own stuff inside it, nothing SDK related
     // ToDo: MAYBE onDestroy() we should make sure to exit some of our threads for the motor movement?
+    // ToDo: Disable USB callbacks would be called here, in like onDestroy().
     // The wheels example project had onStop and onDestroy disable the wheels...
-    // I'm doing the emergency stop here too. That function disables the wheels at the end.
-    // If we set onDestroy back up, only release our own stuff inside it, nothing SDK related
     //@Override public void onPause  () { super.onPause  (); Log.i(TAG, String.format("%s <========== onPause ==========>",   TAG));}
     //@Override public void onResume () { super.onResume (); Log.i(TAG, String.format("%s <========== onResume ==========>",  TAG));}
     //@Override public void onDestroy() { super.onDestroy(); Log.i(TAG, String.format("%s <========== onDestroy ==========>", TAG));}

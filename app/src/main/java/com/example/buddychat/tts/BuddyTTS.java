@@ -42,9 +42,8 @@ public class BuddyTTS {
         if (enabled) {speak("Hello, how are you today?");}
     }
 
-    /** Check if the class is present (it won't be on simulators, only on the BuddyRobot itself) */
+    /** Check if the class is present (it won't be on simulators, only on the BuddyRobot itself). Need to wrap it in try-except to avoid crashing locally. */
     public static boolean isAvailable() {
-        // Need to wrap it in try-except to avoid crashing locally
         // If the SDK class itself is missing, or the service isn't bound yet, return false
         try                         { return BuddySDK.Speech != null && BuddySDK.Speech.isReadyToSpeak();          }
         catch (RuntimeException ex) { Log.w(TAG, "Buddy speech not ready: " + ex.getMessage()); return false; }
@@ -53,16 +52,15 @@ public class BuddyTTS {
     // --------------------------------------------------------------------
     // Text-to-Speech
     // --------------------------------------------------------------------
-    // ToDo: Start of speech should disable AudioTracking; onSuccess or onError should resume it.
-    // ToDo: So we would need to receive a callback/method here to toggle AudioTracking
-    // ToDo: Or can we just import it?
     public static void speak(String text) {
         // Ready checks
         if (!isAvailable()) { Log.w(TAG, String.format("%s TTS not ready. Call BuddyTTS.init() first.", TAG)); return; }
         if (!enabled      ) { Log.w(TAG, String.format("%s TTS not enabled."                          , TAG)); return; }
 
         // Disable AudioTracking while speaking
-        SensorListener.DisableUsbCallback();
+        SensorListener.setAudioTrackingEnabled(false);
+
+        // ToDo: "THINKING" while waiting for backend, then "NEUTRAL" to speak. If we receive emotions from the backend this will have to change...
         Emotions.setMood(FacialExpression.NEUTRAL);
 
         // Use BuddySDK Speech
@@ -76,7 +74,7 @@ public class BuddyTTS {
     }
     private static void speechCompleted(String s) {
         Log.d(TAG, String.format("%s Speech completed: %s", TAG, s));
-        SensorListener.EnableUsbCallback();
+        SensorListener.setAudioTrackingEnabled(true);
     }
 
     /** Stop current utterance if there is one */
