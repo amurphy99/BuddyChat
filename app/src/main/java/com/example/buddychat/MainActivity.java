@@ -105,6 +105,7 @@ public class MainActivity extends BuddyActivity {
         // Setup USB sensor listeners (AudioTracking is enabled after the first time Buddy talks)
         SensorListener.setupSensors();
         SensorListener.EnableUsbCallback();
+        SensorListener.setHeadSensorsEnabled(true);
 
         // Call an initial emotion to show (I want it to be "sleepy" until we start our chat...)
         //Emotions.setMood(FacialExpression.TIRED);

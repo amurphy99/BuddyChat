@@ -17,7 +17,10 @@ import com.bfr.buddy.usb.shared.MotorMotionData;
 import com.bfr.buddy.usb.shared.VocalData;
 
 import com.bfr.buddysdk.BuddySDK;
+
+// Classes using the resulting sensor data
 import com.example.buddychat.utils.audio_triangulation.AudioTracking;
+import com.example.buddychat.utils.touch_sensors.HeadTouchSensors;
 
 // ====================================================================
 // SensorListener
@@ -59,7 +62,7 @@ public final class SensorListener {
 
         // Head touch sensors
         @Override public void ReceiveHeadSensorData (HeadSensorData  d) throws RemoteException {
-
+            if (headEnabled.get()) { HeadTouchSensors.onHeadTouchSample(d.firstTouchSensor, d.secondTouchSensor, d.thirdTouchSensor); }
         }
 
         // Push into the audio tracking buffer
