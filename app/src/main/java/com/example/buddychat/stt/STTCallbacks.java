@@ -54,7 +54,7 @@ public class STTCallbacks implements STTListener {
 
         // Logging
         String logMsg = String.format("Audio Source: %s (angle=%.1f, endChat=%s)", angleLabel, averageAngle, userEndChat);
-        Log.i(TAG, String.format("%s Recent Average %s", TAG, logMsg));
+        Log.d(TAG, String.format("%s Recent Average %s", TAG, logMsg));
 
 
         // Do some stuff on the UI thread
