@@ -19,6 +19,8 @@ import com.example.buddychat.network.LoginAndProfile;
 import com.example.buddychat.network.model.AuthListener;
 import com.example.buddychat.network.ws.ChatSocketManager;
 import com.example.buddychat.network.ws.ChatUiCallbacks;
+import com.example.buddychat.chat.ChatController;
+import com.example.buddychat.chat.ChatStatus;
 
 // Buddy Features
 import com.example.buddychat.utils.motors.RotateBody;
@@ -64,6 +66,10 @@ public class MainActivity extends BuddyActivity {
     private          ChatUiCallbacks   chatCallbacks;
     private          STTCallbacks      sttCallbacks;
 
+    // So classes can call these
+    private final Runnable startChatAction = this::startChat;
+    private final Runnable   endChatAction = this::endChat;
+
     // =======================================================================
     // Startup code
     // =======================================================================
@@ -107,8 +113,12 @@ public class MainActivity extends BuddyActivity {
         SensorListener.EnableUsbCallback();
         SensorListener.setHeadSensorsEnabled(true);
 
-        // Call an initial emotion to show (I want it to be "sleepy" until we start our chat...)
-        //Emotions.setMood(FacialExpression.TIRED);
+        // Set Buddy's behavior to "Sleep" mode until the chat is started
+        BehaviorTasks.startSleepTask();
+
+        // Set the ChatControllers methods
+        ChatController.setStartChatAction(startChatAction);
+        ChatController.setEndChatAction  (  endChatAction);
     }
 
     // -----------------------------------------------------------------------
@@ -121,8 +131,11 @@ public class MainActivity extends BuddyActivity {
     // The wheels example project had onStop and onDestroy disable the wheels...
     //@Override public void onPause  () { super.onPause  (); Log.i(TAG, String.format("%s <========== onPause ==========>",   TAG));}
     //@Override public void onResume () { super.onResume (); Log.i(TAG, String.format("%s <========== onResume ==========>",  TAG));}
-    //@Override public void onDestroy() { super.onDestroy(); Log.i(TAG, String.format("%s <========== onDestroy ==========>", TAG));}
-
+    @Override public void onDestroy() {
+        Log.i(TAG, String.format("%s <========== onDestroy ==========>", TAG));
+        ChatController.clearChatActions(startChatAction, endChatAction);
+        super.onDestroy();
+    }
 
     // =======================================================================
     // Methods for starting/ending the chat
@@ -139,11 +152,15 @@ public class MainActivity extends BuddyActivity {
         // ...
 
         // 1) ToDo: Wake Buddy up from the "SLEEP" BI
+        BehaviorTasks.stopCurrentTask(); // ToDo: I don't know if the facial animation can play or if it needs to wait for this..
         Emotions.setMood(FacialExpression.HAPPY, 3_000L);
 
         // 2) Connect to the backend through the WebSocket & toggle STT+TTS on
         chat.connect(authToken, chatCallbacks);
         BuddyTTS.toggle(); BuddySTT.toggle(sttCallbacks);
+
+        // 3) Change the ChatStatus
+        ChatStatus.setIsRunning(true);
         Log.i(TAG, String.format("%s Chat connected; STT & TTS started.", TAG));
     }
 
@@ -152,10 +169,13 @@ public class MainActivity extends BuddyActivity {
         // 1) End the chat, disconnect from the backend, & toggle STT+TTS off
         chat.endChat();
         BuddyTTS.toggle(); BuddySTT.toggle(sttCallbacks);
+
+        // 2) Set the ChatStatus
+        ChatStatus.setIsRunning(false);
         Log.i(TAG, String.format("%s Chat ended; STT & TTS paused.", TAG));
 
-        // 2) ToDo: Set "SLEEP" BI
-        //Emotions.setMood(FacialExpression.TIRED);
+        // 3) ToDo: Set "SLEEP" BI -- I feel like we should have like a "wait a few seconds first" thing for stuff like this?
+        BehaviorTasks.startSleepTask();
     }
 
     // =======================================================================
@@ -211,20 +231,16 @@ public class MainActivity extends BuddyActivity {
         buttonTester4.setOnClickListener(v -> {
             Log.w(TAG, String.format("%s Testing Button #4 pressed. (toggle Sleep behavior)", TAG));
 
-            //Emotions.setMood(FacialExpression.LOVE, 2_000L);
-            //RotateBody.rotate(30, 360);
-
-            // BehaviorTasks.toggleSleepWakeUp();
-            if (BehaviorTasks.isRunning) { BehaviorTasks.stopCurrentTask(); }
-            else                         { BehaviorTasks.startSleepTask (); }
+            if (BehaviorTasks.isRunning) { BehaviorTasks.stopCurrentTask(); ChatStatus.setIsRunning(true ); }
+            else                         { BehaviorTasks.startSleepTask (); ChatStatus.setIsRunning(false); }
         });
 
         // Testing Button #5: ToDo: Testing for the BehaviorInstructions for Sleep and WakeUp... no idea what these will do
         buttonTester5.setOnClickListener(v -> {
             Log.w(TAG, String.format("%s Testing Button #5 pressed. (toggle Wake behavior)", TAG));
 
-            if (BehaviorTasks.isRunning) { BehaviorTasks.stopCurrentTask(); }
-            else                         { BehaviorTasks.startWakeUpTask(); }
+            if (BehaviorTasks.isRunning) { BehaviorTasks.stopCurrentTask(); ChatStatus.setIsRunning(true); }
+            else                         { BehaviorTasks.startWakeUpTask(); ChatStatus.setIsRunning(true); }
         });
 
         // -----------------------------------------------------------------------
