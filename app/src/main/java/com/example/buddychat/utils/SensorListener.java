@@ -65,6 +65,7 @@ public final class SensorListener {
             if (headEnabled.get()) { HeadTouchSensors.onHeadTouchSample(d.firstTouchSensor, d.secondTouchSensor, d.thirdTouchSensor); }
         }
 
+        // ToDo: if we were REALLY serious, we could combine this with body/head sensor data and turn/rotate buddy to improve the accuracy...
         // Push into the audio tracking buffer
         @Override public void ReceivedVocalData(VocalData d) throws RemoteException {
             if (audioEnabled.get()) { AudioTracking.onVocalSample(d.SoundSourceLocalisation); }
