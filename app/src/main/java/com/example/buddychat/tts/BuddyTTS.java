@@ -52,13 +52,14 @@ public class BuddyTTS {
     // --------------------------------------------------------------------
     // Text-to-Speech
     // --------------------------------------------------------------------
+    // ToDo: We are disabling AudioTracking entirely for now
     public static void speak(String text) {
         // Ready checks
         if (!isAvailable()) { Log.w(TAG, String.format("%s TTS not ready. Call BuddyTTS.init() first.", TAG)); return; }
         if (!enabled      ) { Log.w(TAG, String.format("%s TTS not enabled."                          , TAG)); return; }
 
         // Disable AudioTracking while speaking
-        SensorListener.setAudioTrackingEnabled(false);
+        //SensorListener.setAudioTrackingEnabled(false);
 
         // ToDo: "THINKING" while waiting for backend, then "NEUTRAL" to speak. If we receive emotions from the backend this will have to change...
         Emotions.setMood(FacialExpression.NEUTRAL);
@@ -73,8 +74,8 @@ public class BuddyTTS {
                 });
     }
     private static void speechCompleted(String s) {
-        Log.d(TAG, String.format("%s Speech completed: %s", TAG, s));
-        SensorListener.setAudioTrackingEnabled(true);
+        Log.d(TAG, String.format("%s TTS Speech completed: %s", TAG, s));
+        //SensorListener.setAudioTrackingEnabled(true);
     }
 
     /** Stop current utterance if there is one */
