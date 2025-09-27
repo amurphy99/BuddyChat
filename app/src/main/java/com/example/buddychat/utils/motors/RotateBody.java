@@ -11,6 +11,7 @@ import com.bfr.buddysdk.BuddySDK;
 // =======================================================================
 // Rotate the body of the robot
 // =======================================================================
+// The minimum speed for rotation is 30
 public final class RotateBody {
     private static final String TAG = "[DPU_RotateBody]";
     private RotateBody() {}  // no instances

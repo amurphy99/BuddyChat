@@ -21,12 +21,12 @@ public final class HeadMotors {
     // Motion Parameters (angles are in degrees, speed in degrees/sec)
     // -----------------------------------------------------------------------
     private static final float SPEED       = 10f;  // Different ranges for yes/no
-    private static final long  SETTLE_MS   = 10L;  // Short pause between steps
+    private static final long  SETTLE_MS   =  5L;  // Short pause between steps
     private static final int   MAX_RETRIES =   2;
 
     // YES angles (pitch)
-    private static final float YES_DOWN    = -10f;
-    private static final float YES_UP      = +10f;
+    private static final float YES_DOWN    = -15f;
+    private static final float YES_UP      = + 5f;
     private static final float HOME        =   0f;  // HOME is 0 for both
 
     // NO angles (yaw)
@@ -272,7 +272,7 @@ public final class HeadMotors {
 
     // Logging for move command success
     private static void moveSuccess(Ops ops, String forCommand, float angle, String success) {
-        Log.i(TAG, String.format("%s %s MOVE for %s ok (angle=%5.1f, resp=%s)", TAG, ops.label, forCommand, angle, success));
+        Log.d(TAG, String.format("%s %s MOVE for %s ok (angle=%5.1f, resp=%s)", TAG, ops.label, forCommand, angle, success));
     }
     private static void moveFailed(Ops ops, String forCommand, float angle, int retries, String err) {
         Log.w(TAG, String.format("%s %s MOVE for %s failed [retry %s/%s] (angle=%.1f, err=%s)", TAG, ops.label, forCommand, retries, MAX_RETRIES, angle, err));
