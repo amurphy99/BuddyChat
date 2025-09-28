@@ -114,7 +114,7 @@ public class MainActivity extends BuddyActivity {
         SensorListener.setHeadSensorsEnabled(true);
 
         // Set Buddy's behavior to "Sleep" mode until the chat is started
-        BehaviorTasks.startSleepTask();
+        //BehaviorTasks.startSleepTask(); // ToDo: Enable this if Diego says it works
 
         // Set the ChatControllers methods
         ChatController.setStartChatAction(startChatAction);
@@ -175,7 +175,7 @@ public class MainActivity extends BuddyActivity {
         Log.i(TAG, String.format("%s Chat ended; STT & TTS paused.", TAG));
 
         // 3) ToDo: Set "SLEEP" BI -- I feel like we should have like a "wait a few seconds first" thing for stuff like this?
-        BehaviorTasks.startSleepTask();
+        //BehaviorTasks.startSleepTask();
     }
 
     // =======================================================================
@@ -231,16 +231,16 @@ public class MainActivity extends BuddyActivity {
         buttonTester4.setOnClickListener(v -> {
             Log.w(TAG, String.format("%s Testing Button #4 pressed. (toggle Sleep behavior)", TAG));
 
-            if (BehaviorTasks.isRunning) { BehaviorTasks.stopCurrentTask(); ChatStatus.setIsRunning(true ); }
-            else                         { BehaviorTasks.startSleepTask (); ChatStatus.setIsRunning(false); }
+            if (BehaviorTasks.isRunning) { BehaviorTasks.stopCurrentTask(); }
+            else                         { BehaviorTasks.startSleepTask (); }
         });
 
         // Testing Button #5: ToDo: Testing for the BehaviorInstructions for Sleep and WakeUp... no idea what these will do
         buttonTester5.setOnClickListener(v -> {
             Log.w(TAG, String.format("%s Testing Button #5 pressed. (toggle Wake behavior)", TAG));
 
-            if (BehaviorTasks.isRunning) { BehaviorTasks.stopCurrentTask(); ChatStatus.setIsRunning(true); }
-            else                         { BehaviorTasks.startWakeUpTask(); ChatStatus.setIsRunning(true); }
+            if (BehaviorTasks.isRunning) { BehaviorTasks.stopCurrentTask(); }
+            else                         { BehaviorTasks.startWakeUpTask(); }
         });
 
         // -----------------------------------------------------------------------

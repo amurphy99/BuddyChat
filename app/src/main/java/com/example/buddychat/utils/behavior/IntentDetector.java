@@ -7,8 +7,9 @@ import android.util.Log;
 import com.example.buddychat.utils.motors.HeadMotors;
 
 // =======================================================================
-// Check an utterance for "intent" (yes/no)
+// Checks the LLMs utterance for "intent"
 // =======================================================================
+// This is for the LLMs intent, while "UserIntent" is for detecting the user's intentions (ending the chat, etc.).
 // Allows us to trigger behaviors in Buddy depending on the results
 // The two modes ("MOVE_HEAD" | "POS_NRG") either move Buddy's head or set valence/arousal values to their face.
 // Gets called in: network.ws.ChatUiCallbacks
