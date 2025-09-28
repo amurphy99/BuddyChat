@@ -41,21 +41,8 @@ public class STTCallbacks implements STTListener {
     // -----------------------------------------------------------------------
     @SuppressLint("DefaultLocale")
     @Override public void onText(String utterance, float confidence, String rule) {
-        // Set Buddy's face to "THINKING" while we wait for the backend
-        Emotions.setMood(FacialExpression.THINKING);
-
-        // ToDo: Audio triangulation
-        float  averageAngle = AudioTracking.getRecentAngle();
-        Bucket bucket       = AngleBuckets.classify(averageAngle);
-        String angleLabel   = AngleBuckets.label(bucket);
-
-        // ToDo: User intent detection (for ending the chat)
-        boolean userEndChat = UserIntent.isEndChat(utterance);
-
-        // Logging
-        String logMsg = String.format("Audio Source: %s (angle=%.1f, endChat=%s)", angleLabel, averageAngle, userEndChat);
-        Log.d(TAG, String.format("%s Recent Average %s", TAG, logMsg));
-
+        // Operations that need to happen on detection of a user utterance
+        final String logMsg = onUserUtterance(utterance);
 
         // Do some stuff on the UI thread
         ui.post(() -> {
@@ -66,10 +53,36 @@ public class STTCallbacks implements STTListener {
             Log.i(TAG, String.format("%s Utt: %s (conf: %.3f, rule: %s)", TAG, utterance, confidence, rule));
             sttView  .setText(String.format("User (%.3f): %s", (confidence/1_000), utterance));
 
+            // ToDo: Update the debug text view
             testView1.setText(logMsg);
         });
     }
 
     @Override public void onError(String e) { Log.e(TAG,  " error: " + e); }
+
+
+    // -----------------------------------------------------------------------
+    // Other Helpers
+    // -----------------------------------------------------------------------
+    /** Method that runs when a user's utterance is detected. */
+    private String onUserUtterance(String utterance) {
+        // Set Buddy's face to "THINKING" while we wait for the backend
+        Emotions.setMood(FacialExpression.THINKING);
+
+        // Audio Triangulation -- ToDo: All audio tracking disabled for the demo
+        //final float  averageAngle = AudioTracking.getRecentAngle();
+        //final Bucket bucket       = AngleBuckets.classify(averageAngle);
+        //final String angleLabel   = AngleBuckets.label(bucket);
+        //final String audLog = String.format("(AudioLoc=%s, Angle=%.1f)", angleLabel, averageAngle);
+
+        // User intent detection (for ending the chat) -- ToDo: Here is where I think we would actually end the chat
+        final boolean userEndChat = UserIntent.isEndChat(utterance);
+        final String userLog = String.format("EndChat=%s", userEndChat);
+
+        // Log and return -- ToDo: Normally we would combine the audio string with the user intent string...
+        Log.d(TAG, String.format("%s onUserUtt: %s", TAG, userLog));
+        return userLog;
+    }
+
 
 }
