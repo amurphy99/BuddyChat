@@ -113,12 +113,12 @@ public class MainActivity extends BuddyActivity {
         SensorListener.EnableUsbCallback();
         SensorListener.setHeadSensorsEnabled(true);
 
-        // Set Buddy's behavior to "Sleep" mode until the chat is started
-        //BehaviorTasks.startSleepTask(); // ToDo: Enable this if Diego says it works
-
         // Set the ChatControllers methods
         ChatController.setStartChatAction(startChatAction);
         ChatController.setEndChatAction  (  endChatAction);
+
+        // Set Buddy's behavior to "Sleep" mode until the chat is started
+        BehaviorTasks.startSleepTask();
     }
 
     // -----------------------------------------------------------------------
@@ -153,7 +153,10 @@ public class MainActivity extends BuddyActivity {
 
         // 1) ToDo: Wake Buddy up from the "SLEEP" BI
         BehaviorTasks.stopCurrentTask(); // ToDo: I don't know if the facial animation can play or if it needs to wait for this..
-        Emotions.setMood(FacialExpression.HAPPY, 3_000L);
+        BehaviorTasks.startWakeUpTask();
+
+        // ToDo: Delay the rest of this until after the wake up task ends or just like 1-2 seconds
+        //Emotions.setMood(FacialExpression.HAPPY, 3_000L);
 
         // 2) Connect to the backend through the WebSocket & toggle STT+TTS on
         chat.connect(authToken, chatCallbacks);
@@ -175,7 +178,8 @@ public class MainActivity extends BuddyActivity {
         Log.i(TAG, String.format("%s Chat ended; STT & TTS paused.", TAG));
 
         // 3) ToDo: Set "SLEEP" BI -- I feel like we should have like a "wait a few seconds first" thing for stuff like this?
-        //BehaviorTasks.startSleepTask();
+        BehaviorTasks.stopCurrentTask();
+        BehaviorTasks.startSleepTask();
     }
 
     // =======================================================================
