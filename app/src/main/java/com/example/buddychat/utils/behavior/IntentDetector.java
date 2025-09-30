@@ -4,6 +4,7 @@ import java.util.regex.Pattern;
 
 import android.util.Log;
 
+import com.bfr.buddy.ui.shared.FacialExpression;
 import com.example.buddychat.utils.motors.HeadMotors;
 
 // =======================================================================
@@ -102,6 +103,7 @@ public final class IntentDetector {
         else if (intent == Intent.NEGATE  ) { HeadMotors.shakeNo(); }
         else if (intent == Intent.REASSURE) { Emotions.setMood("HAPPY", 3_000L); }
         else if (intent == Intent.APOLOGY ) { Emotions.setMood("SAD",   3_000L); HeadMotors.shakeNo(); }
+        else { Emotions.setMood(FacialExpression.NEUTRAL); }
     }
 
     // Mode #2: Change the valence (positivity) & arousal (energy)

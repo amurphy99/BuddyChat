@@ -63,7 +63,7 @@ public class BuddyTTS {
         //SensorListener.setAudioTrackingEnabled(false);
 
         // ToDo: "THINKING" while waiting for backend, then "NEUTRAL" to speak. If we receive emotions from the backend this will have to change...
-        Emotions.setMood(FacialExpression.NEUTRAL);
+        //Emotions.setMood(FacialExpression.NEUTRAL);
 
         // Use BuddySDK Speech
         BuddySDK.Speech.startSpeaking(text, new ITTSCallback.Stub() {
