@@ -3,12 +3,17 @@ package com.example.buddychat.tts;
 import android.content.Context;
 import android.util.Log;
 
+import androidx.annotation.Nullable;
+
 import com.bfr.buddy.speech.shared.ITTSCallback;
 import com.bfr.buddy.ui.shared.FacialExpression;
 import com.bfr.buddysdk.BuddySDK;
 
+import com.example.buddychat.chat.ChatController;
 import com.example.buddychat.utils.SensorListener;
 import com.example.buddychat.utils.behavior.Emotions;
+
+import com.bfr.buddy.ui.shared.LabialExpression;
 
 // ====================================================================
 // Wrapper class around BuddySDK.Speech for Text-to-Speech
@@ -35,6 +40,12 @@ public class BuddyTTS {
     }
 
     /** Stop current utterance if there is one */
+    public static void stop() {
+        if (!isAvailable()) { Log.w(TAG, String.format("%s 'stop()' call failed -- TTS not ready.", TAG)); }
+        else { BuddySDK.Speech.stopSpeaking(); }
+    }
+
+    /** Stop current utterance if there is one */
     public static void toggle() {
         if (enabled && BuddySDK.Speech.isSpeaking()) { stop(); }
         enabled = !enabled;
@@ -42,21 +53,11 @@ public class BuddyTTS {
         if (enabled) {speak("Hello, how are you today?");}
     }
 
-    /** Check if the class is present (it won't be on simulators, only on the BuddyRobot itself). Need to wrap it in try-except to avoid crashing locally. */
-    public static boolean isAvailable() {
-        // If the SDK class itself is missing, or the service isn't bound yet, return false
-        try                         { return BuddySDK.Speech != null && BuddySDK.Speech.isReadyToSpeak();          }
-        catch (RuntimeException ex) { Log.w(TAG, "Buddy speech not ready: " + ex.getMessage()); return false; }
-    }
-
-    // --------------------------------------------------------------------
-    // Text-to-Speech
-    // --------------------------------------------------------------------
-    // ToDo: We are disabling AudioTracking entirely for now
+    // ====================================================================
+    // Text-to-Speech -- ToDo: We are disabling AudioTracking entirely for now
+    // ====================================================================
     public static void speak(String text) {
-        // Ready checks
-        if (!isAvailable()) { Log.w(TAG, String.format("%s TTS not ready. Call BuddyTTS.init() first.", TAG)); return; }
-        if (!enabled      ) { Log.w(TAG, String.format("%s TTS not enabled."                          , TAG)); return; }
+        if (BuddyTTS.isBlocked()) { return; } // Ready checks
 
         // Disable AudioTracking while speaking
         //SensorListener.setAudioTrackingEnabled(false);
@@ -65,25 +66,52 @@ public class BuddyTTS {
         Emotions.setMood(FacialExpression.NEUTRAL);
 
         // Use BuddySDK Speech
-        BuddySDK.Speech.startSpeaking(text,
-                new ITTSCallback.Stub() {
-                    @Override public void onSuccess(String s) { speechCompleted(s); }
-                    @Override public void onPause  ()         { }
-                    @Override public void onResume ()         { }
-                    @Override public void onError  (String s) { speechCompleted(s); }
-                });
+        BuddySDK.Speech.startSpeaking(text, new ITTSCallback.Stub() {
+            @Override public void onSuccess(String s) { speechCompleted(s); }
+            @Override public void onPause  ()         { }
+            @Override public void onResume ()         { }
+            @Override public void onError  (String s) { speechCompleted(s); }
+        });
     }
+
+    // --------------------------------------------------------------------
+    // Overload for use only at the end of a chat
+    // --------------------------------------------------------------------
+    public static void speak(String text, @Nullable Runnable onSuccessCb) {
+        if (BuddyTTS.isBlocked()) { return; } // Ready checks
+
+        // Use BuddySDK Speech
+        BuddySDK.Speech.startSpeaking(text, LabialExpression.SPEAK_HAPPY, new ITTSCallback.Stub() {
+            @Override public void onSuccess(String s) { speechCompleted(s); if (onSuccessCb != null) ChatController.mainExecutor().execute(onSuccessCb); }
+            @Override public void onPause  ()         { }
+            @Override public void onResume ()         { }
+            @Override public void onError  (String s) { speechCompleted(s); if (onSuccessCb != null) ChatController.mainExecutor().execute(onSuccessCb); }
+        });
+    }
+
+    // --------------------------------------------------------------------
+    // Shared Helpers
+    // --------------------------------------------------------------------
+    /** Check if the class is present (it won't be on simulators, only on the BuddyRobot itself). Need to wrap it in try-except to avoid crashing locally. */
+    public static boolean isAvailable() {
+        // If the SDK class itself is missing, or the service isn't bound yet, return false
+        try                         { return BuddySDK.Speech != null && BuddySDK.Speech.isReadyToSpeak();          }
+        catch (RuntimeException ex) { Log.w(TAG, "Buddy speech not ready: " + ex.getMessage()); return false; }
+    }
+
+    private static boolean isBlocked() {
+        if (!isAvailable()) { Log.w(TAG, String.format("%s TTS not ready. Call BuddyTTS.init() first.", TAG)); return true; }
+        if (!enabled      ) { Log.w(TAG, String.format("%s TTS not enabled."                          , TAG)); return true; }
+        return false;
+    }
+
     private static void speechCompleted(String s) {
         Log.d(TAG, String.format("%s TTS Speech completed: %s", TAG, s));
         //SensorListener.setAudioTrackingEnabled(true);
     }
 
-    /** Stop current utterance if there is one */
-    public static void stop() {
-        if (!isAvailable()) { Log.w(TAG, String.format("%s 'stop()' call failed -- TTS not ready.", TAG)); }
-        else { BuddySDK.Speech.stopSpeaking(); }
 
-    }
+
 
     /** Settings for the speech, not using right now */
     public static void setPitch (int pitch ) { BuddySDK.Speech.setSpeakerPitch (pitch ); }

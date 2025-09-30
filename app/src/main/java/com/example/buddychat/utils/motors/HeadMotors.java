@@ -116,9 +116,9 @@ public final class HeadMotors {
     // =======================================================================
     // Public: YES (nod) / NO (shake) and resets
     // =======================================================================
-    // Nod   sequence: DOWN => UP    => HOME
+    // Nod   sequence: DOWN => UP    => HOME  (was: { YES_DOWN, YES_UP, HOME })
     // Shake sequence: LEFT => RIGHT => HOME
-    public static void nodYes () { runSequence(Motor.YES, YES_OPS, new float[]{ YES_DOWN, YES_UP,    HOME }); }
+    public static void nodYes () { runSequence(Motor.YES, YES_OPS, new float[]{ YES_DOWN,            HOME }); }
     public static void shakeNo() { runSequence(Motor.NO,   NO_OPS, new float[]{  NO_LEFT,  NO_RIGHT, HOME }); }
 
     // Reset the motors to 0 degrees

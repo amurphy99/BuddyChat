@@ -106,12 +106,11 @@ public class MainActivity extends BuddyActivity {
 
         // Setup STT & TTS
         BuddyTTS.init(getApplicationContext());
-        BuddySTT.init(this, Locale.ENGLISH, Engine.CERENCE_FREE, true);
+        BuddySTT.init(this, Locale.ENGLISH, Engine.GOOGLE, true);
 
         // Setup USB sensor listeners (AudioTracking is enabled after the first time Buddy talks)
-        SensorListener.setupSensors();
-        SensorListener.EnableUsbCallback();
-        SensorListener.setHeadSensorsEnabled(true);
+        SensorListener.setupSensors(); SensorListener.EnableUsbCallback();
+        SensorListener.setTouchSensorsEnabled(true);
 
         // Set the ChatControllers methods
         ChatController.setStartChatAction(startChatAction);
@@ -119,6 +118,7 @@ public class MainActivity extends BuddyActivity {
 
         // Set Buddy's behavior to "Sleep" mode until the chat is started
         BehaviorTasks.startSleepTask();
+        Emotions.setMood(FacialExpression.TIRED);
     }
 
     // -----------------------------------------------------------------------
@@ -148,38 +148,40 @@ public class MainActivity extends BuddyActivity {
 
     /** Start Chat. Two parts: 1) Wake up from "SLEEP" BI; 2) Connect to WebSocket. */
     public void startChat() { if (isRunning) { return; }
+        ChatStatus.setIsRunning(true);  // change the chat status
+
         // Make sure our token is set - ToDo: Could also check the refresh/timeout here (might need to...)
-        // ...
+        // ... ToDo: Could repeat the login call here
 
-        // 1) ToDo: Wake Buddy up from the "SLEEP" BI
-        BehaviorTasks.stopCurrentTask(); // ToDo: I don't know if the facial animation can play or if it needs to wait for this..
-        BehaviorTasks.startWakeUpTask();
+        // 1) Wake Buddy up from the "SLEEP" BI
+        BehaviorTasks.stopCurrentTask();
+        BehaviorTasks.startWakeUpTask(() -> {
+            Emotions.setMood(FacialExpression.HAPPY, 2_000L);
 
-        // ToDo: Delay the rest of this until after the wake up task ends or just like 1-2 seconds
-        //Emotions.setMood(FacialExpression.HAPPY, 3_000L);
-
-        // 2) Connect to the backend through the WebSocket & toggle STT+TTS on
-        chat.connect(authToken, chatCallbacks);
-        BuddyTTS.toggle(); BuddySTT.toggle(sttCallbacks);
-
-        // 3) Change the ChatStatus
-        ChatStatus.setIsRunning(true);
-        Log.i(TAG, String.format("%s Chat connected; STT & TTS started.", TAG));
+            // 2) Connect to the backend through the WebSocket & toggle STT+TTS on
+            chat.connect(authToken, chatCallbacks);
+            BuddyTTS.toggle(); BuddySTT.toggle(sttCallbacks);
+            Log.i(TAG, String.format("%s Chat connected; STT & TTS started.", TAG));
+        });
     }
 
-    /** End Chat. Two parts: 1) Disconnect WebSocket; 2) Set "SLEEP" BI. */
+    /** End Chat. */
     public void endChat() { if (!isRunning) { return; }
-        // 1) End the chat, disconnect from the backend, & toggle STT+TTS off
+        // 1) End the chat through the WebSocket & change the chat status
         chat.endChat();
-        BuddyTTS.toggle(); BuddySTT.toggle(sttCallbacks);
-
-        // 2) Set the ChatStatus
         ChatStatus.setIsRunning(false);
-        Log.i(TAG, String.format("%s Chat ended; STT & TTS paused.", TAG));
 
-        // 3) ToDo: Set "SLEEP" BI -- I feel like we should have like a "wait a few seconds first" thing for stuff like this?
+        // 2) Speak one final message
         BehaviorTasks.stopCurrentTask();
-        BehaviorTasks.startSleepTask();
+        BuddyTTS.speak("Okay, thank you for talking today!", () -> {
+
+            // 3) Toggle STT+TTS off
+            BuddyTTS.toggle(); BuddySTT.toggle(sttCallbacks);
+            Log.i(TAG, String.format("%s Chat ended; STT & TTS paused.", TAG));
+
+            // 4) Start sleep mode -- ToDo: Maybe set its face to "TIRED" onStarted...
+            BehaviorTasks.startSleepTask();
+        });
     }
 
     // =======================================================================
@@ -244,7 +246,7 @@ public class MainActivity extends BuddyActivity {
             Log.w(TAG, String.format("%s Testing Button #5 pressed. (toggle Wake behavior)", TAG));
 
             if (BehaviorTasks.isRunning) { BehaviorTasks.stopCurrentTask(); }
-            else                         { BehaviorTasks.startWakeUpTask(); }
+            else                         { BehaviorTasks.startWakeUpTask(null); }
         });
 
         // -----------------------------------------------------------------------

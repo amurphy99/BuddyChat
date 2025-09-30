@@ -1,4 +1,4 @@
-package com.example.buddychat.utils.touch_sensors;
+package com.example.buddychat.utils.sensors;
 
 import android.util.Log;
 
@@ -7,12 +7,11 @@ import com.example.buddychat.chat.ChatController;
 import com.example.buddychat.utils.behavior.Emotions;
 
 // =======================================================================
-// HeadTouchSensors
+// TouchSensors
 // =======================================================================
-// ToDo: Probably should rework this to just be TouchSensors, then do the body ones in here too.
-public final class HeadTouchSensors {
-    private static final String TAG = "[DPU_HeadTouchSensors]";
-    private HeadTouchSensors() {} // no instances
+public final class TouchSensors {
+    private static final String TAG = "[DPU_TouchSensors]";
+    private TouchSensors() {} // no instances
 
     // -----------------------------------------------------------------------
     // Cooldown Guard (trying to avoid setting the emotion constantly)
@@ -33,13 +32,14 @@ public final class HeadTouchSensors {
     // Receive data from SensorListener
     // -----------------------------------------------------------------------
     // ToDo: Use logs to figure out which motor is which (left, center, right)
-    public static void onHeadTouchSample(boolean touch1, boolean touch2, boolean touch3) {
+    public static void onTouchSample(boolean touch1, boolean touch2, boolean touch3, String source) {
         boolean touched = touch1 | touch2 | touch3;
         if (touched) {
             // Check status of things
             final boolean awakeStatus = ChatStatus.isRunning();
             final boolean inTimeout   = check();
-            Log.i(TAG, String.format("%s Head Touched! (isAwake=%s, inTimeout=%s) (Motors: 1=%s, 2=%s, 3=%s)", TAG, awakeStatus, inTimeout, touch1, touch2, touch3));
+            Log.i(TAG, String.format("%s %s Touched! (isAwake=%s, inTimeout=%s) (Motors: 1=%s, 2=%s, 3=%s)",
+                    TAG, source, awakeStatus, inTimeout, touch1, touch2, touch3));
 
             // Do nothing if we are still timed out
             if (inTimeout) return;

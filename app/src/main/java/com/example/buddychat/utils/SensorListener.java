@@ -20,7 +20,7 @@ import com.bfr.buddysdk.BuddySDK;
 
 // Classes using the resulting sensor data
 import com.example.buddychat.utils.audio_triangulation.AudioTracking;
-import com.example.buddychat.utils.touch_sensors.HeadTouchSensors;
+import com.example.buddychat.utils.sensors.TouchSensors;
 
 // ====================================================================
 // SensorListener
@@ -31,7 +31,7 @@ public final class SensorListener {
 
     // Feature gates (audio/head)
     private static final AtomicBoolean audioEnabled = new AtomicBoolean(false);
-    private static final AtomicBoolean headEnabled  = new AtomicBoolean(false);
+    private static final AtomicBoolean touchEnabled = new AtomicBoolean(false);
 
     // -----------------------------------------------------------------------
     // Setup Sensors
@@ -44,12 +44,14 @@ public final class SensorListener {
         });
     }
 
+    // -----------------------------------------------------------------------
     // Feature toggles
+    // -----------------------------------------------------------------------
     public static void setAudioTrackingEnabled(boolean enable) { audioEnabled.set(enable); }
     public static boolean isAudioTrackingEnabled() { return audioEnabled.get(); }
 
-    public static void setHeadSensorsEnabled(boolean enable) { headEnabled.set(enable); }
-    public static boolean isHeadSensorsEnabled() { return headEnabled.get(); }
+    public static void setTouchSensorsEnabled(boolean enable) { touchEnabled.set(enable); }
+    public static boolean isTouchSensorsEnabled() { return touchEnabled.get(); }
 
     // -----------------------------------------------------------------------
     // Subscribe to USB sensor readings (page 48 of SDK user guide)
@@ -58,11 +60,15 @@ public final class SensorListener {
     public static final IUsbAidlCbListener usbCallback = new IUsbAidlCbListener.Stub() {
         @Override public void ReceiveMotorMotionData(MotorMotionData d) throws RemoteException { }
         @Override public void ReceiveMotorHeadData  (MotorHeadData   d) throws RemoteException { }
-        @Override public void ReceiveBodySensorData (BodySensorData  d) throws RemoteException { }
+
+        // Body touch sensors
+        @Override public void ReceiveBodySensorData (BodySensorData  d) throws RemoteException {
+            if (touchEnabled.get()) { TouchSensors.onTouchSample(d.sensor1Touch, d.sensor2Touch, d.sensor3Touch, "BODY"); }
+        }
 
         // Head touch sensors
         @Override public void ReceiveHeadSensorData (HeadSensorData  d) throws RemoteException {
-            if (headEnabled.get()) { HeadTouchSensors.onHeadTouchSample(d.firstTouchSensor, d.secondTouchSensor, d.thirdTouchSensor); }
+            if (touchEnabled.get()) { TouchSensors.onTouchSample(d.firstTouchSensor, d.secondTouchSensor, d.thirdTouchSensor, "HEAD"); }
         }
 
         // ToDo: if we were REALLY serious, we could combine this with body/head sensor data and turn/rotate buddy to improve the accuracy...

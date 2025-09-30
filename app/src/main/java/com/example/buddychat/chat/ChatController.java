@@ -5,6 +5,7 @@ import android.os.Looper;
 import android.util.Log;
 
 import java.lang.ref.WeakReference;
+import java.util.concurrent.Executor;
 
 // =======================================================================
 // Chat Controller
@@ -15,6 +16,10 @@ public final class ChatController {
 
     // Main Thread
     private static final Handler MAIN = new Handler(Looper.getMainLooper());
+    private static final Executor MAIN_EXECUTOR = MAIN::post;
+
+    // Helper for classes that need to execute things
+    public static Executor mainExecutor() { return MAIN_EXECUTOR; }
 
     // Actions wired by the Activity
     private static volatile WeakReference<Runnable> startChatAction = new WeakReference<>(null);
