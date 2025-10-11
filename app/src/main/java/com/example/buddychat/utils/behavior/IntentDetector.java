@@ -38,7 +38,8 @@ public final class IntentDetector {
 
     // Apology / limitation / decline ("sorry...", "I can't...", etc.)
     private static final String APOLOGY_SRC =
-            "(?:sorry\\b|my\\s+bad\\b|i\\s+apologize\\b|apologies\\b|pardon\\b"
+            "(?:i\\s*(?:am|['’]?m)\\s+sorry\\b"
+                    + "|sorry\\b|my\\s+bad\\b|i\\s+apologize\\b|apologies\\b|pardon\\b"
                     + "|i\\s+(?:can(?:not|\\s*not|\\'?t)|won'?t|shouldn'?t)\\b"
                     + "|i(?:\\s*’|\\s*')?m\\s+(?:unable|not\\s+able)\\b"
                     + "|won'?t\\s+be\\s+able\\s+to\\b"

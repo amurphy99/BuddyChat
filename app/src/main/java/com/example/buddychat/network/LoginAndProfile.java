@@ -60,6 +60,8 @@ public class LoginAndProfile {
         final String eMessage = String.format("%s Login failed: %s", TAG, t.getMessage());
         Log.d(TAG, eMessage);
         UI.post(() -> Toast.makeText(botView.getContext(), eMessage, Toast.LENGTH_LONG).show());
+
+
     }
 
     // --------------------------------------------------------------------

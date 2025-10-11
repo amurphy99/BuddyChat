@@ -151,7 +151,7 @@ public class MainActivity extends BuddyActivity {
         ChatStatus.setIsRunning(true);  // change the chat status
 
         // Make sure our token is set - ToDo: Could also check the refresh/timeout here (might need to...)
-        // ... ToDo: Could repeat the login call here
+
 
         // 1) Wake Buddy up from the "SLEEP" BI
         BehaviorTasks.stopCurrentTask();
