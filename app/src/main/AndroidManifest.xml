@@ -1,13 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools">
+<manifest
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    package="com.example.buddychat"
+    >
 
+    <!-- Non-BuddySDK related; this is for our WebSocket chat -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- STT & TTS -->
     <uses-permission android:name="com.bfr.buddy.resource.SPEECH" />
     <uses-permission android:name="com.bfr.buddy.resource.LISTEN" />
-    <uses-permission android:name="com.bfr.buddy.resource.LEDS"   />
-    <uses-permission android:name="com.bfr.buddy.resource.GUI"    />
 
-    <uses-permission android:name="android.permission.INTERNET"    />
+    <!-- Emotions Module -->
+    <uses-permission android:name="com.bfr.buddy.resource.GUI"  />
+    <uses-permission android:name="com.bfr.buddy.resource.FACE" />
+    <uses-permission android:name="com.bfr.buddy.resource.LEDS" />
+
+    <!-- AudioTracking sensors -->
+    <uses-permission android:name="com.bfr.buddy.resource.SENSOR_MODULE" />
+
+    <!-- Nodding the head "YES" or "NO" -->
+    <uses-permission android:name="com.bfr.buddy.resource.HEAD" />
+
+    <!-- Disabling this for now, we aren't going to use it probably..? -->
+    <uses-permission android:name="com.bfr.buddy.resource.WHEELS"  />
 
     <application
         android:name="com.example.buddychat.MainApplication"
@@ -23,17 +40,17 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.BuddyChat"
         tools:targetApi="31">
+
         <activity
             android:name="com.example.buddychat.MainActivity"
             android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/BuddyTheme">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
 
+            <intent-filter>
+                <action   android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
     </application>
-
 </manifest>
