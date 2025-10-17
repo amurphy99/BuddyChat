@@ -15,6 +15,7 @@ import com.bfr.buddysdk.BuddyActivity;
 import com.bfr.buddy.ui.shared.FacialExpression;
 
 // Speech System
+import com.example.buddychat.chat.ChatHub;
 import com.example.buddychat.network.LoginAndProfile;
 import com.example.buddychat.network.model.AuthListener;
 import com.example.buddychat.network.ws.ChatSocketManager;
@@ -104,8 +105,16 @@ public class MainActivity extends BuddyActivity {
         // Transfer the touch information to BuddyCore in the background
         BuddySDK.UI.setViewAsFace(findViewById(R.id.view_face));
 
+        ChatHub hub = ChatHub.get();
+        BuddyTTS.registerWithHub(hub); // Adds TTS to listen to ChatHub
+
+        // When user taps Start Chat:
+        //hub.startAll();
+
+        // When user taps End Chat (or onPause()):
+        //hub.stopAll();
+
         // Setup STT & TTS
-        BuddyTTS.init(getApplicationContext());
         BuddySTT.init(this, Locale.ENGLISH, Engine.GOOGLE, true);
 
         // Setup USB sensor listeners (AudioTracking is enabled after the first time Buddy talks)
