@@ -15,6 +15,7 @@ import android.util.Log;
  * When we start the chat, each service is toggled on here. If they all return True we proceed as
  * usual. If any fail (returning false), we cancel all services. <br>
  * ToDo: Maybe add Toast here so I can say which service failed?
+ * ToDo: STTCallbacks needs to be integrated somehow
  */
 public final class ChatHub {
     private static final String TAG = "[DPU_ChatHub]";
