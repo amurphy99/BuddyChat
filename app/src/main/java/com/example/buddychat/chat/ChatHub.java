@@ -64,6 +64,7 @@ public final class ChatHub {
             state.set(ChatState.ON);
             Log.i(TAG, String.format("%s All processes successful; chat started cleanly", TAG));
             // ToDo: The behavior task stuff and opening message needs to be setup here
+            // "Hello, how are you today?"
         });
     }
 

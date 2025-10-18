@@ -39,18 +39,14 @@ public final class BuddySTT {
     }
 
     // Check if the task (1) was initialized and (2) if the task is ready
-    private static boolean ready() {
-        if (task == null) { return false; }
-        return task.isRunning();
-    }
+    private static boolean ready() { if (task == null) { return false; } return task.isRunning(); }
 
     // --------------------------------------------------------------------------------
     // Speech-to-Text Usage
     // --------------------------------------------------------------------------------
-    // ToDo: I wonder if start/stop should be private?
-    public static void    pause() { if (ready()) task.pause(); Log.d(TAG, String.format("%s STT paused",  TAG)); }
-    public static void    stop () { if (ready()) task.stop (); Log.d(TAG, String.format("%s STT stopped", TAG)); }
-    public static boolean start() {
+    public  static void    pause() { if (ready()) task.pause(); Log.d(TAG, String.format("%s STT paused",  TAG)); }
+    private static void    stop () { if (ready()) task.stop (); Log.d(TAG, String.format("%s STT stopped", TAG)); }
+    private static boolean start() {
         if (!ready()) { Log.e(TAG, String.format("%s STT start FAILURE (not available)", TAG)); return false; }
 
         // Start the STTTask using the callbacks object we were initialized with
@@ -68,6 +64,7 @@ public final class BuddySTT {
         Log.d(TAG, String.format("%s STT start SUCCESS", TAG));
         return true;
     }
+
 
     // ================================================================================
     // Link to ChatHub
