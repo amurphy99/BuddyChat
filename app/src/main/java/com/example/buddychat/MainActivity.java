@@ -163,7 +163,7 @@ public class MainActivity extends BuddyActivity {
 
 
         // 1) Wake Buddy up from the "SLEEP" BI
-        BehaviorTasks.stopCurrentTask();
+
         BehaviorTasks.startWakeUpTask(() -> {
             Emotions.setMood(FacialExpression.HAPPY, 2_000L);
 
@@ -181,7 +181,7 @@ public class MainActivity extends BuddyActivity {
         ChatStatus.setIsRunning(false);
 
         // 2) Speak one final message
-        BehaviorTasks.stopCurrentTask();
+
         BuddyTTS.speak("Okay, thank you for talking today!", () -> {
 
             // 3) Toggle STT+TTS off

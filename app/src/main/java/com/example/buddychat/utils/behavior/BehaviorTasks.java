@@ -34,7 +34,7 @@ public final class BehaviorTasks {
     // ToDo: Replace these with a single function that takes an argument: "Sleep" | "WakeUp"
     // Set the current task to "Sleep" & start it
     public static void startSleepTask() {
-        if (biTask != null) { biTask.stop(); }
+        if (biTask != null) { stopCurrentTask(); }
         biMode = SLEEP;
         biTask = BuddySDK.Companion.createBICategoryTask(SLEEP, null, null, true);
         biTask.start(newTaskCallback(null));
@@ -42,7 +42,7 @@ public final class BehaviorTasks {
 
     // Set the current task to "WakeUp" & start it
     public static void startWakeUpTask(@Nullable Runnable onSuccess) {
-        if (biTask != null) { biTask.stop(); }
+        if (biTask != null) { stopCurrentTask(); }
         biMode = WAKE;
         biTask = BuddySDK.Companion.createBICategoryTask(WAKE, null, null, true);
         biTask.start(newTaskCallback(onSuccess));
