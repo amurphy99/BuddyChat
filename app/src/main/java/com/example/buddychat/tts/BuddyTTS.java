@@ -13,22 +13,23 @@ import com.bfr.buddysdk.BuddySDK;
 import com.example.buddychat.chat.ChatController;
 import com.example.buddychat.utils.behavior.Emotions;
 import com.example.buddychat.chat.ChatHub;
+import com.example.buddychat.chat.ChatStatusListener;
 
-// ====================================================================
+// ================================================================================
 // Wrapper class around BuddySDK.Speech for Text-to-Speech
-// ====================================================================
+// ================================================================================
+// ToDo: I might not actually care about 'cancelRef' here...
 public final class BuddyTTS {
     private static final String TAG = "[DPU_BuddyTTS]";
     private BuddyTTS() {} // static-only class
 
     private static boolean enabled = false;
 
-    // set by ChatHub.onStart(cancel). When cancel.get() == true, we should not speak.
-    private static volatile AtomicBoolean cancelRef = null;
 
-    // --------------------------------------------------------------------
+
+    // --------------------------------------------------------------------------------
     // Initialization & Utility
-    // --------------------------------------------------------------------
+    // --------------------------------------------------------------------------------
     public static void start() { SetupTTS.loadTTS(); }
     public static void stop () { try { BuddySDK.Speech.stopSpeaking(); } catch (Throwable ignored) {} }
 
@@ -46,32 +47,14 @@ public final class BuddyTTS {
         if (enabled) {speak("Hello, how are you today?");}
     }
 
-    // ====================================================================
-    // Text-to-Speech
-    // ====================================================================
-    // if AudioTracking ever comes back, it needs to be disabled while buddy speaks...
-    public static void speak(String text) {
+    // ================================================================================
+    // Text-to-Speech (you have the option to do different
+    // ================================================================================
+    public static void speak(String text, @Nullable LabialExpression iExpression, @Nullable Runnable onSuccessCb) {
         if (SetupTTS.notReady()) { return; } // Ready checks
+        if (iExpression == null) { iExpression = LabialExpression.SPEAK_NEUTRAL; }
 
-        // ToDo: "THINKING" while waiting for backend, then "NEUTRAL" to speak. If we receive emotions from the backend this will have to change...
-        //Emotions.setMood(FacialExpression.NEUTRAL);
-
-        // Use BuddySDK Speech
-        BuddySDK.Speech.startSpeaking(text, new ITTSCallback.Stub() {
-            @Override public void onSuccess(String s) { speechCompleted(s); }
-            @Override public void onPause  ()         { }
-            @Override public void onResume ()         { }
-            @Override public void onError  (String s) { speechCompleted(s); }
-        });
-    }
-
-    // --------------------------------------------------------------------
-    // Overload for use only at the end of a chat
-    // --------------------------------------------------------------------
-    // ToDo: This code could be combined with the above, but the only difference is the SPEAK_HAPPY thing
-    public static void speak(String text, @Nullable Runnable onSuccessCb) {
-        if (SetupTTS.notReady()) { return; } // Ready checks
-        BuddySDK.Speech.startSpeaking(text, LabialExpression.SPEAK_HAPPY, new ITTSCallback.Stub() {
+        BuddySDK.Speech.startSpeaking(text, iExpression, new ITTSCallback.Stub() {
             @Override public void onSuccess(String s) { speechCompleted(s); runCb(onSuccessCb); }
             @Override public void onPause  ()         { }
             @Override public void onResume ()         { }
@@ -79,34 +62,29 @@ public final class BuddyTTS {
         });
     }
 
-    // --------------------------------------------------------------------
-    // Shared Helpers
-    // --------------------------------------------------------------------
-    private static void speechCompleted(String s) {
-        Log.d(TAG, String.format("%s TTS Speech completed: %s", TAG, s));
-    }
+    // Overloads for 'speak' (don't require all arguments)
+    public static void speak(String text) { speak(text, LabialExpression.SPEAK_NEUTRAL, null); }
+    public static void speak(String text, @Nullable Runnable onSuccessCb) { speak(text, LabialExpression.SPEAK_NEUTRAL, onSuccessCb); }
 
-    private static void runCb(@Nullable Runnable cb) {
-        if (cb != null) ChatController.mainExecutor().execute(cb);
-    }
+    // Shared Helpers (log on speech completion & execute a callback on success)
+    private static void speechCompleted(String s) { Log.d(TAG, String.format("%s TTS Speech completed: %s", TAG, s)); }
+    private static void runCb(@Nullable Runnable cb) { if (cb != null) ChatController.mainExecutor().execute(cb); }
 
-    // ====================================================================
-    // Link to CHatHub
-    // ====================================================================
+
+    // ================================================================================
+    // Link to ChatHub
+    // ================================================================================
+    // set by ChatHub.onStart(cancel). When cancel.get() == true, we should not speak.
+    private static volatile AtomicBoolean cancelRef = null;
+
     public static void registerWithHub(ChatHub hub) { hub.addListener(LISTENER); }
 
     // Listener adapter
     // ToDo: This isn't exactly right yet, start is different
     // ToDo: How would I make it so that buddy greeting people is the very last thing it does?
     // ToDo: I guess I would put that in ChatHub...
-    private static final ChatHub.Listener LISTENER = new ChatHub.Listener() {
-        @Override public boolean onStart(AtomicBoolean cancel) {
-            cancelRef = cancel; enabled = true; start();
-            return true;
-        }
-
-        // Cooperative cancel has already been set in ChatHub
-        @Override public void onStop() { enabled = false; stop(); cancelRef = null; }
+    private static final ChatStatusListener LISTENER = new ChatStatusListener() {
+        @Override public boolean onStart(AtomicBoolean cancel) { cancelRef = cancel; start(); return true;}
+        @Override public void    onStop (                    ) { stop(); cancelRef = null; }
     };
-
 }

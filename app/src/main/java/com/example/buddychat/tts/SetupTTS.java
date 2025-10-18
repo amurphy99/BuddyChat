@@ -23,15 +23,15 @@ public final class SetupTTS {
     }
 
     // -----------------------------------------------------------------------
-    // Ready checks
+    // Ready checks -- If the SDK class itself is missing, or the service isn't bound yet, return false
     // -----------------------------------------------------------------------
     /** Check if the class is present (it won't be on simulators, only on the BuddyRobot itself). Need to wrap it in try-except to avoid crashing locally. */
     public static boolean isReady() {
-        // If the SDK class itself is missing, or the service isn't bound yet, return false
         try                         { return BuddySDK.Speech != null && BuddySDK.Speech.isReadyToSpeak(); }
         catch (RuntimeException ex) { Log.w(TAG, String.format("%s BuddyTTS not ready: %s", TAG, ex.getMessage())); return false; }
     }
     public static boolean notReady() { return !isReady(); }
+
 
     // -----------------------------------------------------------------------
     // Settings for the speech module -- not using right now
