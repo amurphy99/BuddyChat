@@ -18,34 +18,15 @@ import com.example.buddychat.chat.ChatStatusListener;
 // ================================================================================
 // Wrapper class around BuddySDK.Speech for Text-to-Speech
 // ================================================================================
+// SetupTTS makes sure everything is loaded on app start
 // ToDo: I might not actually care about 'cancelRef' here...
 public final class BuddyTTS {
     private static final String TAG = "[DPU_BuddyTTS]";
     private BuddyTTS() {} // static-only class
 
-    private static boolean enabled = false;
-
-
-
-    // --------------------------------------------------------------------------------
-    // Initialization & Utility
-    // --------------------------------------------------------------------------------
-    public static void start() { SetupTTS.loadTTS(); }
-    public static void stop () { try { BuddySDK.Speech.stopSpeaking(); } catch (Throwable ignored) {} }
-
-    // ToDo: Basically we need to de-couple this from toggle
-    // ToDo: And this first message for hello how are you goes in the ChatHub; when all services start successfully, then we say this...
-    public static void startTTS() {
-
-    }
-
-    /** Stop current utterance if there is one */
-    public static void toggle() {
-        if (enabled && BuddySDK.Speech.isSpeaking()) { stop(); }
-        enabled = !enabled;
-        Log.w(TAG, enabled ? "TTS Enabled." : "TTS Disabled");
-        if (enabled) {speak("Hello, how are you today?");}
-    }
+    // Control
+    public static boolean start() { return SetupTTS.isReady(); }
+    public static void    stop () { try { BuddySDK.Speech.stopSpeaking(); } catch (Throwable ignored) {} }
 
     // ================================================================================
     // Text-to-Speech (you have the option to do different
@@ -77,14 +58,11 @@ public final class BuddyTTS {
     // set by ChatHub.onStart(cancel). When cancel.get() == true, we should not speak.
     private static volatile AtomicBoolean cancelRef = null;
 
+    // Listener Adapter
     public static void registerWithHub(ChatHub hub) { hub.addListener(LISTENER); }
-
-    // Listener adapter
-    // ToDo: This isn't exactly right yet, start is different
-    // ToDo: How would I make it so that buddy greeting people is the very last thing it does?
-    // ToDo: I guess I would put that in ChatHub...
     private static final ChatStatusListener LISTENER = new ChatStatusListener() {
-        @Override public boolean onStart(AtomicBoolean cancel) { cancelRef = cancel; start(); return true;}
+        @Override public boolean onStart(AtomicBoolean cancel) { cancelRef = cancel; return start(); }
         @Override public void    onStop (                    ) { stop(); cancelRef = null; }
     };
+
 }
