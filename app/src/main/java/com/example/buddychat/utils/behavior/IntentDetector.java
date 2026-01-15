@@ -101,7 +101,7 @@ public final class IntentDetector {
     // Mode #1: Tell Buddy to shake their head 'no' or nod their head 'yes'
     private static void intentMode1(Intent intent) {
         if      (intent == Intent.AFFIRM  ) { Emotions.setMood("HAPPY", 3_000L); HeadMotors.nodYes();  }
-        else if (intent == Intent.NEGATE  ) { HeadMotors.shakeNo(); }
+        else if (intent == Intent.NEGATE  ) { Emotions.setMood("ANGRY", 3_000L); HeadMotors.shakeNo(); }
         else if (intent == Intent.REASSURE) { Emotions.setMood("HAPPY", 3_000L); }
         else if (intent == Intent.APOLOGY ) { Emotions.setMood("SAD",   3_000L); HeadMotors.shakeNo(); }
         else { Emotions.setMood(FacialExpression.NEUTRAL); }
