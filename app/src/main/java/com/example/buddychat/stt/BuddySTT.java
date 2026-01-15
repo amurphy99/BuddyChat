@@ -1,114 +1,84 @@
 package com.example.buddychat.stt;
 
-import android.Manifest;
-import android.app.Activity;
 import android.content.Context;
-import android.content.pm.PackageManager;
 import android.util.Log;
 
-import androidx.annotation.NonNull;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.bfr.buddy.speech.shared.ISTTCallback;
 import com.bfr.buddy.speech.shared.STTResult;
 import com.bfr.buddy.speech.shared.STTResultsData;
-import com.bfr.buddysdk.BuddySDK;
 import com.bfr.buddysdk.services.speech.STTTask;
+import com.bfr.buddysdk.BuddySDK;
 
-import java.util.Locale;
+import com.example.buddychat.chat.ChatHub;
+import com.example.buddychat.chat.ChatStatusListener;
 
-// =======================================================================
+// ================================================================================
 // Wrapper class around BuddySDK.Speech for Speech-to-Text
-// =======================================================================
-public class BuddySTT {
-    // Public choices
-    public enum Engine { GOOGLE, CERENCE_FREE, CERENCE_FCF }
-
-    // -----------------------------------------------------------------------
-    // Internal
-    // -----------------------------------------------------------------------
-    private static final String   TAG       = "[BuddySTT]";
-    private static final int      REQ_PERM  = 9001;
-    private static final String[] MIC_PERMS = { Manifest.permission.RECORD_AUDIO };
-
-    private static boolean available;
-    private static STTTask task;
-    private static boolean continuous;
-
+// ================================================================================
+// ToDo: Maybe need to pause this while it talks, does that mean we shouldn't do listen continuous?
+// ToDo: Maybe need to cancel the other stuff onError -- or "retry" with this a few times...
+// On initialization we call SetupSTT to get an STTTask object from the SDK that we can use.
+// Start, pause, and stop use that task as expected.
+public final class BuddySTT {
+    private static final String TAG = "[DPU_BuddySTT]";
     private BuddySTT() {} // Static-only class
 
-    // -----------------------------------------------------------------------
-    // Initialization
-    // -----------------------------------------------------------------------
-    /** Called once in MainActivity.onCreate */
-    public static void init(Context context, Locale locale, Engine engine, boolean listenContinuous) {
-        // Check microphone permission
-        if (notMicPermission(context)) { requestMicPermission(context); }
-        continuous = listenContinuous;
+    private static final boolean LISTEN_CONTINUOUS = true;
 
-        // Guard for BuddyRobot hardware
-        try {
-            // We can delete the French optional
-            switch (engine) {
-                case GOOGLE       : task = BuddySDK.Speech.createGoogleSTTTask(locale); break;
-                case CERENCE_FREE : task = BuddySDK.Speech.createCerenceFreeSpeechTask(locale); break;
-                case CERENCE_FCF  :
-                    String fcf = locale == Locale.ENGLISH ? "audio_en.fcf" : "audio_fr.fcf";
-                    task = BuddySDK.Speech.createCerenceTaskFromAssets(locale, fcf, context.getAssets());
-                    break;
-            }
+    private static STTTask task;
+    private static STTCallbacks sttCallbacks;
 
-            // Success, finish initializing
-            task.initialize(); available = true;
-            Log.i(TAG, String.format("%s Buddy STT initialised with: %s", TAG, engine));
-        }
-
-        // Not on a Buddy robot / some other failure
-        catch (Throwable t) { available = false; Log.w(TAG, String.format("%s Buddy STT unavailable: %s", TAG, t)); }
+    // --------------------------------------------------------------------------------
+    // Initialization -- Called once in MainActivity.onCreate
+    // --------------------------------------------------------------------------------
+    /** Sets up microphone permissions, STTCallbacks, and the BuddySDK STTTask. */
+    public static void init(Context context, STTCallbacks callbacks) {
+        SetupSTT.checkMicPermission(context);
+        sttCallbacks = callbacks;
+        task = SetupSTT.initializeSTTTask(context);
     }
 
-    // -----------------------------------------------------------------------
+    // Check if the task (1) was initialized and (2) if the task is ready
+    private static boolean ready() { if (task == null) { return false; } return task.isRunning(); }
+
+    // --------------------------------------------------------------------------------
     // Speech-to-Text Usage
-    // -----------------------------------------------------------------------
-    /** Start listening (no-op on devices without Buddy speech service). */
-    public static void start(@NonNull STTListener cb) {
-        if (!available) { Log.d(TAG, "STT ignored (not available)"); return; }
+    // --------------------------------------------------------------------------------
+    public  static void    pause() { if (ready()) task.pause(); Log.d(TAG, String.format("%s STT paused",  TAG)); }
+    private static void    stop () { if (ready()) task.stop (); Log.d(TAG, String.format("%s STT stopped", TAG)); }
+    public  static boolean start() { // ToDo: changed this to public for now
+        if (!ready()) { Log.e(TAG, String.format("%s STT start FAILURE (not available)", TAG)); return false; }
 
-        // Start listening
-        Log.w(TAG, "STT started");
-
-        task.start(continuous, new ISTTCallback.Stub() {
+        // Start the STTTask using the callbacks object we were initialized with
+        task.start(LISTEN_CONTINUOUS, new ISTTCallback.Stub() {
             @Override public void onSuccess(STTResultsData res) {
                 if (!res.getResults().isEmpty()) {
                     STTResult r = res.getResults().get(0);
-                    cb.onText(r.getUtterance(), r.getConfidence(), r.getRule());
+                    sttCallbacks.onText(r.getUtterance(), r.getConfidence(), r.getRule());
                 }
             }
-            @Override public void onError(String e) { cb.onError(e); }
+            @Override public void onError(String e) { sttCallbacks.onError(e); }
         });
+
+        // Return that our startup was a success
+        Log.d(TAG, String.format("%s STT start SUCCESS", TAG));
+        return true;
     }
 
-    /** Stop helper (currently never used) */
-    public static void stop() { if (available) task.stop(); }
 
-    /** Start/Pause Wrapper */
-    public static void toggle (@NonNull STTListener cb) {
-        if (task.isRunning()) { task.pause(); return; }
-        start(cb);
-    }
+    // ================================================================================
+    // Link to ChatHub
+    // ================================================================================
+    // set by ChatHub.onStart(cancel). When cancel.get() == true, we should not speak.
+    private static volatile AtomicBoolean cancelRef = null;
 
-    // -----------------------------------------------------------------------
-    // Permission Helpers -- used once during initialization
-    // -----------------------------------------------------------------------
-    private static boolean notMicPermission(Context context) {
-        return ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED;
-    }
-
-    private static void requestMicPermission(Context context) {
-        Log.i(TAG, String.format("%s Requesting microphone permission...", TAG));
-        if (!(context instanceof Activity)) return;  // caller must be an Activity
-        ActivityCompat.requestPermissions((Activity) context, MIC_PERMS, REQ_PERM);
-    }
+    // Listener Adapter
+    public static void registerWithHub(ChatHub hub) { hub.addListener(LISTENER); }
+    private static final ChatStatusListener LISTENER = new ChatStatusListener() {
+        @Override public boolean onStart(AtomicBoolean cancel) { cancelRef = cancel; return start(); }
+        @Override public void    onStop () { stop(); cancelRef = null; }
+    };
 
 }

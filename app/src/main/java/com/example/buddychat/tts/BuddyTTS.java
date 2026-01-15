@@ -1,120 +1,68 @@
 package com.example.buddychat.tts;
 
-import android.content.Context;
-import android.util.Log;
+import java.util.concurrent.atomic.AtomicBoolean;
 
+import android.util.Log;
 import androidx.annotation.Nullable;
 
 import com.bfr.buddy.speech.shared.ITTSCallback;
 import com.bfr.buddy.ui.shared.FacialExpression;
+import com.bfr.buddy.ui.shared.LabialExpression;
 import com.bfr.buddysdk.BuddySDK;
 
 import com.example.buddychat.chat.ChatController;
-import com.example.buddychat.utils.SensorListener;
 import com.example.buddychat.utils.behavior.Emotions;
+import com.example.buddychat.chat.ChatHub;
+import com.example.buddychat.chat.ChatStatusListener;
 
-import com.bfr.buddy.ui.shared.LabialExpression;
-
-// ====================================================================
+// ================================================================================
 // Wrapper class around BuddySDK.Speech for Text-to-Speech
-// ====================================================================
-public class BuddyTTS {
-    private static final String  TAG     = "[BuddyTTS]";
-    private static       boolean loaded  = false;
-    private static       boolean enabled = false;
+// ================================================================================
+// SetupTTS makes sure everything is loaded on app start
+// ToDo: I might not actually care about 'cancelRef' here...
+public final class BuddyTTS {
+    private static final String TAG = "[DPU_BuddyTTS]";
+    private BuddyTTS() {} // static-only class
 
-    private BuddyTTS() {}  // static-only class
+    // Control
+    public static boolean start() { return SetupTTS.isReady(); }
+    public static void    stop () { try { BuddySDK.Speech.stopSpeaking(); } catch (Throwable ignored) {} }
 
-    // --------------------------------------------------------------------
-    // Initialization & Utility
-    // --------------------------------------------------------------------
-    /** Called once in MainActivity.onCreate (ctx would be used if I wanted Toast) */
-    public static void init(Context ctx) {start();}
+    // ================================================================================
+    // Text-to-Speech (you have the option to do different
+    // ================================================================================
+    public static void speak(String text, @Nullable LabialExpression iExpression, @Nullable Runnable onSuccessCb) {
+        if (SetupTTS.notReady()) { return; } // Ready checks
+        if (iExpression == null) { iExpression = LabialExpression.SPEAK_NEUTRAL; }
 
-    public static void start() {
-        if (loaded) return;
-        BuddySDK.Speech.loadReadSpeaker();          // async, but cheap to call again
-        BuddySDK.Speech.setSpeakerVoice("kate");    // English voice
-        loaded = true;
-        Log.d(TAG, "ReadSpeaker loaded");
-    }
-
-    /** Stop current utterance if there is one */
-    public static void stop() {
-        if (!isAvailable()) { Log.w(TAG, String.format("%s 'stop()' call failed -- TTS not ready.", TAG)); }
-        else { BuddySDK.Speech.stopSpeaking(); }
-    }
-
-    /** Stop current utterance if there is one */
-    public static void toggle() {
-        if (enabled && BuddySDK.Speech.isSpeaking()) { stop(); }
-        enabled = !enabled;
-        Log.w(TAG, enabled ? "TTS Enabled." : "TTS Disabled");
-        if (enabled) {speak("Hello, how are you today?");}
-    }
-
-    // ====================================================================
-    // Text-to-Speech -- ToDo: We are disabling AudioTracking entirely for now
-    // ====================================================================
-    public static void speak(String text) {
-        if (BuddyTTS.isBlocked()) { return; } // Ready checks
-
-        // Disable AudioTracking while speaking
-        //SensorListener.setAudioTrackingEnabled(false);
-
-        // ToDo: "THINKING" while waiting for backend, then "NEUTRAL" to speak. If we receive emotions from the backend this will have to change...
-        //Emotions.setMood(FacialExpression.NEUTRAL);
-
-        // Use BuddySDK Speech
-        BuddySDK.Speech.startSpeaking(text, new ITTSCallback.Stub() {
-            @Override public void onSuccess(String s) { speechCompleted(s); }
+        BuddySDK.Speech.startSpeaking(text, iExpression, new ITTSCallback.Stub() {
+            @Override public void onSuccess(String s) { speechCompleted(s); runCb(onSuccessCb); }
             @Override public void onPause  ()         { }
             @Override public void onResume ()         { }
-            @Override public void onError  (String s) { speechCompleted(s); }
+            @Override public void onError  (String s) { speechCompleted(s); runCb(onSuccessCb); }
         });
     }
 
-    // --------------------------------------------------------------------
-    // Overload for use only at the end of a chat
-    // --------------------------------------------------------------------
-    public static void speak(String text, @Nullable Runnable onSuccessCb) {
-        if (BuddyTTS.isBlocked()) { return; } // Ready checks
+    // Overloads for 'speak' (don't require all arguments)
+    public static void speak(String text) { speak(text, LabialExpression.SPEAK_NEUTRAL, null); }
+    public static void speak(String text, @Nullable Runnable onSuccessCb) { speak(text, LabialExpression.SPEAK_NEUTRAL, onSuccessCb); }
 
-        // Use BuddySDK Speech
-        BuddySDK.Speech.startSpeaking(text, LabialExpression.SPEAK_HAPPY, new ITTSCallback.Stub() {
-            @Override public void onSuccess(String s) { speechCompleted(s); if (onSuccessCb != null) ChatController.mainExecutor().execute(onSuccessCb); }
-            @Override public void onPause  ()         { }
-            @Override public void onResume ()         { }
-            @Override public void onError  (String s) { speechCompleted(s); if (onSuccessCb != null) ChatController.mainExecutor().execute(onSuccessCb); }
-        });
-    }
-
-    // --------------------------------------------------------------------
-    // Shared Helpers
-    // --------------------------------------------------------------------
-    /** Check if the class is present (it won't be on simulators, only on the BuddyRobot itself). Need to wrap it in try-except to avoid crashing locally. */
-    public static boolean isAvailable() {
-        // If the SDK class itself is missing, or the service isn't bound yet, return false
-        try                         { return BuddySDK.Speech != null && BuddySDK.Speech.isReadyToSpeak();          }
-        catch (RuntimeException ex) { Log.w(TAG, "Buddy speech not ready: " + ex.getMessage()); return false; }
-    }
-
-    private static boolean isBlocked() {
-        if (!isAvailable()) { Log.w(TAG, String.format("%s TTS not ready. Call BuddyTTS.init() first.", TAG)); return true; }
-        if (!enabled      ) { Log.w(TAG, String.format("%s TTS not enabled."                          , TAG)); return true; }
-        return false;
-    }
-
-    private static void speechCompleted(String s) {
-        Log.d(TAG, String.format("%s TTS Speech completed: %s", TAG, s));
-        //SensorListener.setAudioTrackingEnabled(true);
-    }
+    // Shared Helpers (log on speech completion & execute a callback on success)
+    private static void speechCompleted(String s) { Log.d(TAG, String.format("%s TTS Speech completed: %s", TAG, s)); }
+    private static void runCb(@Nullable Runnable cb) { if (cb != null) ChatController.mainExecutor().execute(cb); }
 
 
+    // ================================================================================
+    // Link to ChatHub
+    // ================================================================================
+    // set by ChatHub.onStart(cancel). When cancel.get() == true, we should not speak.
+    private static volatile AtomicBoolean cancelRef = null;
 
+    // Listener Adapter
+    public static void registerWithHub(ChatHub hub) { hub.addListener(LISTENER); }
+    private static final ChatStatusListener LISTENER = new ChatStatusListener() {
+        @Override public boolean onStart(AtomicBoolean cancel) { cancelRef = cancel; return start(); }
+        @Override public void    onStop (                    ) { stop(); cancelRef = null; }
+    };
 
-    /** Settings for the speech, not using right now */
-    public static void setPitch (int pitch ) { BuddySDK.Speech.setSpeakerPitch (pitch ); }
-    public static void setSpeed (int speed ) { BuddySDK.Speech.setSpeakerSpeed (speed ); }
-    public static void setVolume(int volume) { BuddySDK.Speech.setSpeakerVolume(volume); }
 }

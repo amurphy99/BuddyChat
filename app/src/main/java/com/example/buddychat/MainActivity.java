@@ -15,6 +15,7 @@ import com.bfr.buddysdk.BuddyActivity;
 import com.bfr.buddy.ui.shared.FacialExpression;
 
 // Speech System
+import com.example.buddychat.chat.ChatHub;
 import com.example.buddychat.network.LoginAndProfile;
 import com.example.buddychat.network.model.AuthListener;
 import com.example.buddychat.network.ws.ChatSocketManager;
@@ -23,6 +24,7 @@ import com.example.buddychat.chat.ChatController;
 import com.example.buddychat.chat.ChatStatus;
 
 // Buddy Features
+import com.example.buddychat.tts.SetupTTS;
 import com.example.buddychat.utils.motors.RotateBody;
 import com.example.buddychat.utils.SensorListener;
 import com.example.buddychat.utils.behavior.Emotions;
@@ -33,7 +35,6 @@ import com.example.buddychat.utils.behavior.BehaviorTasks;
 import com.example.buddychat.stt.STTCallbacks;
 import com.example.buddychat.tts.BuddyTTS;
 import com.example.buddychat.stt.BuddySTT;
-import com.example.buddychat.stt.BuddySTT.Engine;
 
 // =======================================================================
 // Main Activity of the app; runs on startup
@@ -62,13 +63,15 @@ public class MainActivity extends BuddyActivity {
     // WebSocket related
     private volatile String            authToken;
     private          boolean           isRunning = false;
-    private final    ChatSocketManager chat      = new ChatSocketManager();
-    private          ChatUiCallbacks   chatCallbacks;
+    private          ChatSocketManager chat;
     private          STTCallbacks      sttCallbacks;
 
     // So classes can call these
     private final Runnable startChatAction = this::startChat;
     private final Runnable   endChatAction = this::endChat;
+
+    // Controller
+    private ChatHub hub;
 
     // =======================================================================
     // Startup code
@@ -84,8 +87,8 @@ public class MainActivity extends BuddyActivity {
         initializeUI(); wireButtons();
 
         // WebSocket & STT callback objects (we pass the STT callback some things here like UI references, etc.)
-        chatCallbacks = new ChatUiCallbacks(botView, buttonStartEnd, running -> isRunning = running);
-        sttCallbacks  = new STTCallbacks(userView, testView1, chat::sendString);
+        this.chat = new ChatSocketManager(botView, buttonStartEnd, running -> isRunning = running);
+        sttCallbacks  = new STTCallbacks(chat::sendString);
 
         // Login, set auth tokens, and fetch the profile. ToDo: Could also use this in the future to set profile information...
         final LoginAndProfile loginAndProfile = new LoginAndProfile(textUserInfo, botView);
@@ -105,8 +108,14 @@ public class MainActivity extends BuddyActivity {
         BuddySDK.UI.setViewAsFace(findViewById(R.id.view_face));
 
         // Setup STT & TTS
-        BuddyTTS.init(getApplicationContext());
-        BuddySTT.init(this, Locale.ENGLISH, Engine.GOOGLE, true);
+        BuddySTT.init(this, sttCallbacks);
+        SetupTTS.loadTTS();
+
+        // Add TTS and STT to ChatHub control
+        hub = ChatHub.get();
+        BuddyTTS.registerWithHub(hub);
+        BuddySTT.registerWithHub(hub);
+
 
         // Setup USB sensor listeners (AudioTracking is enabled after the first time Buddy talks)
         SensorListener.setupSensors(); SensorListener.EnableUsbCallback();
@@ -149,18 +158,15 @@ public class MainActivity extends BuddyActivity {
     /** Start Chat. Two parts: 1) Wake up from "SLEEP" BI; 2) Connect to WebSocket. */
     public void startChat() { if (isRunning) { return; }
         ChatStatus.setIsRunning(true);  // change the chat status
-
         // Make sure our token is set - ToDo: Could also check the refresh/timeout here (might need to...)
 
-
         // 1) Wake Buddy up from the "SLEEP" BI
-        BehaviorTasks.stopCurrentTask();
         BehaviorTasks.startWakeUpTask(() -> {
             Emotions.setMood(FacialExpression.HAPPY, 2_000L);
 
             // 2) Connect to the backend through the WebSocket & toggle STT+TTS on
-            chat.connect(authToken, chatCallbacks);
-            BuddyTTS.toggle(); BuddySTT.toggle(sttCallbacks);
+            chat.connect();
+            hub.startAll();
             Log.i(TAG, String.format("%s Chat connected; STT & TTS started.", TAG));
         });
     }
@@ -172,17 +178,20 @@ public class MainActivity extends BuddyActivity {
         ChatStatus.setIsRunning(false);
 
         // 2) Speak one final message
-        BehaviorTasks.stopCurrentTask();
         BuddyTTS.speak("Okay, thank you for talking today!", () -> {
 
             // 3) Toggle STT+TTS off
-            BuddyTTS.toggle(); BuddySTT.toggle(sttCallbacks);
+            hub.stopAll();
+
             Log.i(TAG, String.format("%s Chat ended; STT & TTS paused.", TAG));
 
             // 4) Start sleep mode -- ToDo: Maybe set its face to "TIRED" onStarted...
             BehaviorTasks.startSleepTask();
         });
     }
+
+
+
 
     // =======================================================================
     // UI Elements
