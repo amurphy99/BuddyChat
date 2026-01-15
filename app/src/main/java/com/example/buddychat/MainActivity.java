@@ -63,8 +63,7 @@ public class MainActivity extends BuddyActivity {
     // WebSocket related
     private volatile String            authToken;
     private          boolean           isRunning = false;
-    private final    ChatSocketManager chat      = new ChatSocketManager();
-    private          ChatUiCallbacks   chatCallbacks;
+    private          ChatSocketManager chat;
     private          STTCallbacks      sttCallbacks;
 
     // So classes can call these
@@ -88,7 +87,7 @@ public class MainActivity extends BuddyActivity {
         initializeUI(); wireButtons();
 
         // WebSocket & STT callback objects (we pass the STT callback some things here like UI references, etc.)
-        chatCallbacks = new ChatUiCallbacks(botView, buttonStartEnd, running -> isRunning = running);
+        this.chat = new ChatSocketManager(botView, buttonStartEnd, running -> isRunning = running);
         sttCallbacks  = new STTCallbacks(chat::sendString);
 
         // Login, set auth tokens, and fetch the profile. ToDo: Could also use this in the future to set profile information...
@@ -159,22 +158,15 @@ public class MainActivity extends BuddyActivity {
     /** Start Chat. Two parts: 1) Wake up from "SLEEP" BI; 2) Connect to WebSocket. */
     public void startChat() { if (isRunning) { return; }
         ChatStatus.setIsRunning(true);  // change the chat status
-
         // Make sure our token is set - ToDo: Could also check the refresh/timeout here (might need to...)
 
-
         // 1) Wake Buddy up from the "SLEEP" BI
-
         BehaviorTasks.startWakeUpTask(() -> {
             Emotions.setMood(FacialExpression.HAPPY, 2_000L);
 
             // 2) Connect to the backend through the WebSocket & toggle STT+TTS on
-            chat.connect(authToken, chatCallbacks);
-
+            chat.connect();
             hub.startAll();
-
-
-
             Log.i(TAG, String.format("%s Chat connected; STT & TTS started.", TAG));
         });
     }
@@ -186,7 +178,6 @@ public class MainActivity extends BuddyActivity {
         ChatStatus.setIsRunning(false);
 
         // 2) Speak one final message
-
         BuddyTTS.speak("Okay, thank you for talking today!", () -> {
 
             // 3) Toggle STT+TTS off
@@ -198,6 +189,9 @@ public class MainActivity extends BuddyActivity {
             BehaviorTasks.startSleepTask();
         });
     }
+
+
+
 
     // =======================================================================
     // UI Elements

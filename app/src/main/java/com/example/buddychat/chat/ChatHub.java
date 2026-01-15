@@ -37,6 +37,50 @@ public final class ChatHub {
     public void addListener   (ChatStatusListener l) { listeners.addIfAbsent(l); }
     public void removeListener(ChatStatusListener l) { listeners.remove     (l); }
 
+
+    // ToDo: ---- testing ----
+    // These would be 1 for each sub process
+    public static AtomicBoolean wsState = new AtomicBoolean(false);
+
+    // This will be for everyone (should we cancel?)
+    public static AtomicBoolean cancelStart = new AtomicBoolean(false);
+
+    // ToDo: Notes for how to finish this
+    /** So how would it work?
+     * I actually think that i should split it into two parts kind of
+     * So part one is init some of the stuff, we don't want to actually enable everything like wheels though
+     * because that takes like extra energy.
+     * So when we want to start the chat, we call two functions, first we do the STT TTS stuff
+     * Then we do the WS one, if that fails, we cancel the first part. If the first part fails, we don't do the second one
+     * So i guess I need to check if those have like onSuccess or onFailure, or if they are instant or not...
+     * <br>
+     * 3 Functions: start, cancel, end
+     * <br>
+     * Okay so: we call startChat
+     * - We start/enable all of the "basic processes"
+     * - If that works, we move on to the Login/WebSocket
+     * - If that works, we do the final stuff -> wake up, say hello, start listening, set status to True
+     * <br>
+     * Then second, we will have an cancelChat that needs to cascade to all processes
+     * - cancel chat won't do the cute things because when it is called, buddy should still be asleep
+     * - so like if chat == false, buddy should still be asleep and we should stop everything
+     * - if chat == true, we still cancel everything, but we say goodbye and set the behavior to sleep
+     * - disconnect the chat/ws
+     * - turn off/pause STT and TTS
+     * - play sleep animation
+     * <br>
+     * so stop and cancel are in a single function, we just decide if we should say goodbye or change the behavior based
+     * on whether or not a chat session was active when it was called.
+     * <br>
+     * Bottom Line: it seems like all of this code can be a lot simpler than I have been making it unfortunately...
+     * I think I will for sure remove all of the extra interface/UI stuff, it is just clunky. So I will do that toast class idea,
+     * and then start removing the extra. We really just need to slim down all of the code for this app.
+     */
+    public static void shutdown() {
+
+    }
+
+
     // --------------------------------------------------------------------------------
     // Start Everything
     // --------------------------------------------------------------------------------
@@ -63,7 +107,9 @@ public final class ChatHub {
             // 3b) If all services started successfully
             state.set(ChatState.ON);
             Log.i(TAG, String.format("%s All processes successful; chat started cleanly", TAG));
+
             // ToDo: The behavior task stuff and opening message needs to be setup here
+            // ToDo: Actually since this is like the serial thing, we should do the wakeup and speak in here too?
             // "Hello, how are you today?"
         });
     }

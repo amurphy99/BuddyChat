@@ -17,6 +17,8 @@ import com.example.buddychat.chat.ChatStatusListener;
 // ================================================================================
 // Wrapper class around BuddySDK.Speech for Speech-to-Text
 // ================================================================================
+// ToDo: Maybe need to pause this while it talks, does that mean we shouldn't do listen continuous?
+// ToDo: Maybe need to cancel the other stuff onError -- or "retry" with this a few times...
 // On initialization we call SetupSTT to get an STTTask object from the SDK that we can use.
 // Start, pause, and stop use that task as expected.
 public final class BuddySTT {
@@ -46,7 +48,7 @@ public final class BuddySTT {
     // --------------------------------------------------------------------------------
     public  static void    pause() { if (ready()) task.pause(); Log.d(TAG, String.format("%s STT paused",  TAG)); }
     private static void    stop () { if (ready()) task.stop (); Log.d(TAG, String.format("%s STT stopped", TAG)); }
-    private static boolean start() {
+    public  static boolean start() { // ToDo: changed this to public for now
         if (!ready()) { Log.e(TAG, String.format("%s STT start FAILURE (not available)", TAG)); return false; }
 
         // Start the STTTask using the callbacks object we were initialized with
