@@ -10,6 +10,7 @@ import com.example.buddychat.utils.UiUtils;
 // Fetch profile information from the backend API
 // ================================================================================
 // Relies on the `TokenManager` package for the authentication token
+// ToDo: To update the actual text UI, we need way to pass a callback in fetch profile that has a reference to that UI element
 public final class ProfileManager {
     private static final String TAG  = "[DPU_Profile]";
 
@@ -22,11 +23,11 @@ public final class ProfileManager {
 
         // Use the NetworkUtils code
         NetworkUtils.fetchProfile(authToken, new NetworkUtils.ProfileCallback() {
-            @Override public void onSuccess(com.example.buddychat.network.model.Profile p) { onProfileSuccess(p); }
+            @Override public void onSuccess(Profile p  ) { onProfileSuccess(p); }
             @Override public void onError  (Throwable t) { onProfileError  (t); }
         });
     }
-    
+
     // --------------------------------------------------------------------------------
     // Profile Callbacks
     // --------------------------------------------------------------------------------
