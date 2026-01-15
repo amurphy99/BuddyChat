@@ -42,6 +42,7 @@ import com.example.buddychat.stt.BuddySTT;
 
 // [NEW] New stuff
 import com.example.buddychat.network.api.TokenManager;
+import com.example.buddychat.network.api.Profile;
 
 
 // =======================================================================
@@ -85,7 +86,7 @@ public class MainActivity extends BuddyActivity {
 
         // Initial login in app startup
         NetworkUtils.pingHealth();  // Test the API
-        TokenManager.initialLogin();
+        TokenManager.initialLogin(Profile::fetchProfile);
 
 
 
