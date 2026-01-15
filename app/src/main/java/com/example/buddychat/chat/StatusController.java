@@ -6,6 +6,7 @@ import android.util.Log;
 import com.example.buddychat.stt.BuddySTT;
 import com.example.buddychat.tts.BuddyTTS;
 import com.example.buddychat.network.ws.ChatSocketManager;
+import com.example.buddychat.utils.UiUtils;
 
 /** StatusController <br>
  * This only handles 3 main services + the beginning/ending behaviors. <br>
@@ -36,72 +37,88 @@ public final class StatusController {
     // ToDo: I guess maybe we should do the enumerate thing...
     public static AtomicBoolean chatStatus = new AtomicBoolean(false);
 
-    // ToDo: Notes for how to finish this
-    /**
-     * Bottom Line: it seems like all of this code can be a lot simpler than I have been making it unfortunately...
-     * I think I will for sure remove all of the extra interface/UI stuff, it is just clunky. So I will do that toast class idea,
-     * and then start removing the extra. We really just need to slim down all of the code for this app.
-     */
-    private static void idk() {}
 
 
+
+    // Simple thread-safe flag: Is the robot currently in an active chat session?
+    // true = Awake, Talking, WS Connected
+    // false = Asleep, Idle, WS Disconnected
+    private static final AtomicBoolean isChatActive = new AtomicBoolean(false);
+
     // --------------------------------------------------------------------------------
-    // Start
+    // Public API (start & stop)
     // --------------------------------------------------------------------------------
-    /** Start "stage 1" -- initializes TTS & STT + WebSocket connection. If WS is succeeds it triggers start "stage 2." */
+    /** Called by MainActivity (Button Press) or touch sensors.
+     * Start "stage 1" -- initializes TTS & STT + WebSocket connection. If WS is succeeds it triggers start "stage 2." */
     public static void start() {
-        Log.i(TAG, String.format("%s Start called", TAG));
+        if (isChatActive.get()) { Log.w(TAG, String.format("%s Start called, but chat is already active. Ignoring.", TAG)); return; }
+        Log.i(TAG, String.format("%s Starting Chat Sequence (Stage 1)...", TAG));
 
-        // Enable all of the "basic processes" ToDo: (does this include the face and behaviors? maybe not...)
+        // 1. Enable all of the "basic processes"
         BuddyTTS.start();            // LoadTTS is already done in MainActivity, so that is always ready (just calling it for fun)
         BuddySTT.start();            // Starting STT here
-        ChatSocketManager.connect(); // ChatSocketManager
+
+        // 2. Connect to WebSocket (async) ToDo: I don't think i setup 'showError()' yet...
+        ChatSocketManager.connect(); // The SocketManager will call 'startSuccess()' if it works, or 'showError()' if it fails.
     }
 
-    /** Start "stage 2" -- called after a successful startup by ChatSocketManager. Sets status and plays startup behavior.*/
-    public static void startSuccess() {
-        chatStatus.set(true); // ToDo: Maybe should guard for already true?
-        playBeginning();
-    }
-
-    // --------------------------------------------------------------------------------
-    // Stop
-    // --------------------------------------------------------------------------------
-    /**
-     * Then second, we will have an cancelChat that needs to cascade to all processes
-     * - cancel chat won't do the cute things because when it is called, buddy should still be asleep
-     * - so like if chat == false, buddy should still be asleep and we should stop everything
-     * - if chat == true, we still cancel everything, but we say goodbye and set the behavior to sleep
-     * - disconnect the chat/ws
-     * - turn off/pause STT and TTS
-     * - play sleep animation
-     * <br>
-     * so stop and cancel are in a single function, we just decide if we should say goodbye or change the behavior based
-     * on whether or not a chat session was active when it was called.
-     */
+    /** Called by MainActivity (Button Press) or Voice Command ("Goodbye").
+     * Stops the chat cleanly. */
     public static void stop() {
-        // Cancel everything regardless of the chat state
-        Log.i(TAG, String.format("%s Stop called", TAG));
-        cancel();
-
-        // Play the cute animations--Only if we were already chatting (if called due to a startup failure, we are still asleep)
-        if (chatStatus.get()) { playEnding(); }
-
-        // Change the status
-        chatStatus.set(false);
+        stopInternal("User requested stop");
     }
 
-    /** Disconnect from Chat/WebSocket (if connected) & stop listening. */
-    private static void cancel() {
-        // ToDo: What were the other things in the background?
-        // ToDo: Might need to guard for already false--like if this gets called back to back
-        Log.d(TAG, String.format("%s Cancel called", TAG));
+    // --------------------------------------------------------------------------------
+    // Callbacks (Called by ChatSocketManager)
+    // --------------------------------------------------------------------------------
 
-        // Pause STT
-        // Pause TTS
-        // Disconnect from WS/End the chat
+    /** * Stage 2: WebSocket is connected. The robot is now "Online".
+     * Wake up the robot and say hello.
+     */
+    public static void startSuccess() {
+        Log.i(TAG, "WebSocket Connected. Entering Stage 2 (Wake Up).");
 
+        isChatActive.set(true);
 
+        // 1. Visual: Play Wake Up Animation
+        playBeginning();
+
+        // 2. Audio: Say Hello
+        //BuddyTTS.speak("Hello! I am ready to chat.");
+    }
+
+    /**
+     * Called if the connection fails (after retries).
+     */
+    public static void showError(String errorMsg) {
+        Log.e(TAG, "Chat failed to start: " + errorMsg);
+        UiUtils.showToast("Connection Error: " + errorMsg);
+
+        // Ensure everything is shut down safely
+        stopInternal("System Error");
+    }
+
+    // --------------------------------------------------------------------------------
+    // Internal Logic
+    // --------------------------------------------------------------------------------
+    // ToDo: Cancel current utterance?
+    private static void stopInternal(String reason) {
+        Log.i(TAG, "Stopping Chat. Reason: " + reason);
+
+        // 1. Check if we were actually awake
+        boolean wasAwake = isChatActive.get();
+        isChatActive.set(false); // Mark as offline immediately
+
+        // 2. If we were awake, be polite before dying. If we weren't awake (e.g., error during startup), just ensure the sleep pose is held.
+        if (wasAwake) { playEnding(); }
+        else          { Log.d(TAG, "Robot was not active, skipping goodbye animation."); }
+
+        // 3. Kill the Network
+        ChatSocketManager.endChat(); // Sends "end_chat" JSON and closes socket
+
+        // 4. Kill the Sensors
+        //BuddySTT.stop();
+        BuddyTTS.stop(); // Silence pending speech
     }
 
     // --------------------------------------------------------------------------------
@@ -109,15 +126,13 @@ public final class StatusController {
     // --------------------------------------------------------------------------------
     /** Say final message and start sleep animation. */
     private static void playBeginning() {
-        Log.d(TAG, String.format("%s Playing beginning behavior", TAG));
+        Log.d(TAG, String.format("%s >>> Playing beginning behavior <<<", TAG));
     }
 
     /** Say final message and start sleep animation. */
     private static void playEnding() {
-        Log.d(TAG, String.format("%s Playing ending behavior", TAG));
+        Log.d(TAG, String.format("%s >>> Playing ending behavior <<<", TAG));
     }
-
-
 
 
 
