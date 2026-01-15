@@ -1,4 +1,4 @@
-package com.example.buddychat.network.ws2;
+package com.example.buddychat.network.ws;
 
 import android.os.Handler;
 import android.os.Looper;
@@ -13,6 +13,7 @@ import com.example.buddychat.network.BackendURLs;
 import com.example.buddychat.network.api.TokenManager;
 
 import com.example.buddychat.chat.StatusController;
+import com.example.buddychat.network.ws2.ChatUICallbacks;
 
 // ================================================================================
 // WebSocket Manager

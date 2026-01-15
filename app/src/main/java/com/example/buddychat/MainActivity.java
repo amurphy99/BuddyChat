@@ -14,11 +14,9 @@ import com.bfr.buddy.ui.shared.FacialExpression;
 
 // Speech System
 import com.example.buddychat.chat.ChatHub;
-import com.example.buddychat.network.LoginAndProfile;
 import com.example.buddychat.network.NetworkUtils;
-import com.example.buddychat.network.model.AuthListener;
 
-import com.example.buddychat.network.ws2.ChatSocketManager;
+import com.example.buddychat.network.ws.ChatSocketManager;
 
 import com.example.buddychat.chat.ChatController;
 import com.example.buddychat.chat.ChatStatus;
@@ -84,18 +82,10 @@ public class MainActivity extends BuddyActivity {
         TokenManager.initialLogin(ProfileManager::fetchProfile);
 
 
-
-
         // WebSocket & STT callback objects (we pass the STT callback some things here like UI references, etc.)
-        this.chat = new ChatSocketManager(botView, buttonStartEnd, running -> isRunning = running);
-        sttCallbacks  = new STTCallbacks(chat::sendString);
+        sttCallbacks  = new STTCallbacks(ChatSocketManager::sendString);
 
-        // Login, set auth tokens, and fetch the profile. ToDo: Could also use this in the future to set profile information...
-        final LoginAndProfile loginAndProfile = new LoginAndProfile(textUserInfo, botView);
-        loginAndProfile.doLoginAndProfile(new AuthListener() {
-            @Override public void onSuccess(String    token) { authToken = token; }
-            @Override public void onError  (Throwable t    ) { Log.e(TAG, "Login failed"); }
-        });
+
 
 
 

@@ -5,7 +5,7 @@ import android.util.Log;
 
 import com.example.buddychat.stt.BuddySTT;
 import com.example.buddychat.tts.BuddyTTS;
-import com.example.buddychat.network.ws2.ChatSocketManager;
+import com.example.buddychat.network.ws.ChatSocketManager;
 
 /** StatusController <br>
  * This only handles 3 main services + the beginning/ending behaviors. <br>

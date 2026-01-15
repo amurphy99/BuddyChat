@@ -7,6 +7,7 @@ import okhttp3.Response;
 import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
 
+import com.example.buddychat.network.ws.ChatSocketManager;
 import com.example.buddychat.network.ws.MessageHandler;
 import com.example.buddychat.chat.StatusController;
 import com.example.buddychat.utils.UiUtils;
