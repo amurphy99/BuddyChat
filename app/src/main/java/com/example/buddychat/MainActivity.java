@@ -17,8 +17,11 @@ import com.bfr.buddy.ui.shared.FacialExpression;
 // Speech System
 import com.example.buddychat.chat.ChatHub;
 import com.example.buddychat.network.LoginAndProfile;
+import com.example.buddychat.network.NetworkUtils;
 import com.example.buddychat.network.model.AuthListener;
-import com.example.buddychat.network.ws.ChatSocketManager;
+
+import com.example.buddychat.network.ws2.ChatSocketManager;
+
 import com.example.buddychat.network.ws.ChatUiCallbacks;
 import com.example.buddychat.chat.ChatController;
 import com.example.buddychat.chat.ChatStatus;
@@ -36,6 +39,11 @@ import com.example.buddychat.stt.STTCallbacks;
 import com.example.buddychat.tts.BuddyTTS;
 import com.example.buddychat.stt.BuddySTT;
 
+
+// [NEW] New stuff
+import com.example.buddychat.network.api.TokenManager;
+
+
 // =======================================================================
 // Main Activity of the app; runs on startup
 // =======================================================================
@@ -48,20 +56,9 @@ public class MainActivity extends BuddyActivity {
 
     // UI References
     private TextView textUserInfo;   // Username (currently hidden)
-    private TextView userView;       // Display user's most recent message
-    private TextView botView;        // Display Buddy's most recent message
     private Button   buttonStartEnd; // Start or end the chat/backend websocket connection
 
-    // UI Elements for Development
-    private Button   buttonTester1;  // [Development] Trigger features to be tested
-    private Button   buttonTester2;  // [Development] Emergency stop any motors/movements
-    private Button   buttonTester3;  // [Development] Trigger features to be tested
-    private Button   buttonTester4;  // [Development] Trigger features to be tested
-    private Button   buttonTester5;  // [Development] Trigger features to be tested
-    private TextView testView1;
-
     // WebSocket related
-    private volatile String            authToken;
     private          boolean           isRunning = false;
     private          ChatSocketManager chat;
     private          STTCallbacks      sttCallbacks;
@@ -74,9 +71,9 @@ public class MainActivity extends BuddyActivity {
     private ChatHub hub;
 
     // =======================================================================
-    // Startup code
+    // Startup code (should any of this go in onSDKReady() instead?)
     // =======================================================================
-    // I don't know if maybe all of this should just go into the onSDKReady() function...
+    // Login as a way to check our status (i.e. if the login works we know the app is working)
     @Override protected void onCreate(Bundle savedInstanceState) {
         // Setup the app & layout
         super.onCreate(savedInstanceState);
@@ -85,6 +82,13 @@ public class MainActivity extends BuddyActivity {
         // Setup UI
         setContentView(R.layout.activity_main);
         initializeUI(); wireButtons();
+
+        // Initial login in app startup
+        NetworkUtils.pingHealth();  // Test the API
+        TokenManager.initialLogin();
+
+
+
 
         // WebSocket & STT callback objects (we pass the STT callback some things here like UI references, etc.)
         this.chat = new ChatSocketManager(botView, buttonStartEnd, running -> isRunning = running);
@@ -96,6 +100,16 @@ public class MainActivity extends BuddyActivity {
             @Override public void onSuccess(String    token) { authToken = token; }
             @Override public void onError  (Throwable t    ) { Log.e(TAG, "Login failed"); }
         });
+
+
+
+
+
+
+
+
+
+
     }
 
     // =======================================================================
@@ -143,6 +157,8 @@ public class MainActivity extends BuddyActivity {
     @Override public void onDestroy() {
         Log.i(TAG, String.format("%s <========== onDestroy ==========>", TAG));
         ChatController.clearChatActions(startChatAction, endChatAction);
+
+        TokenManager.stopTokenRefresher();
         super.onDestroy();
     }
 
@@ -192,81 +208,22 @@ public class MainActivity extends BuddyActivity {
 
 
 
-
     // =======================================================================
     // UI Elements
     // =======================================================================
     /** Initialize UI element references */
     private void initializeUI() {
         textUserInfo   = findViewById(R.id.textUserInfo  );
-        userView       = findViewById(R.id.userView      );
-        botView        = findViewById(R.id.botView       );
         buttonStartEnd = findViewById(R.id.buttonStartEnd);
-
-        buttonTester1  = findViewById(R.id.buttonTester1 );
-        buttonTester2  = findViewById(R.id.buttonTester2 );
-        buttonTester3  = findViewById(R.id.buttonTester3 );
-        buttonTester4  = findViewById(R.id.buttonTester4 );
-        buttonTester5  = findViewById(R.id.buttonTester5 );
-        testView1      = findViewById(R.id.testView1     );
     }
 
     /** Set button listeners */
     private void wireButtons() {
         // Start or end the chat/backend websocket connection
-        buttonStartEnd.setOnClickListener(v -> { Log.w(TAG, String.format("%s StartEnd Button pressed", TAG)); toggleChat(); });
-
-        // -----------------------------------------------------------------------
-        // Testing Buttons
-        // -----------------------------------------------------------------------
-        // Testing Button #1: Trigger "YES" nod
-        buttonTester1.setOnClickListener(v -> {
-            Log.w(TAG, String.format("%s Testing Button #1 pressed.", TAG));
-            Emotions.setMood(FacialExpression.SURPRISED, 2_000L);
-
-            HeadMotors.logHeadMotorStatus();
-            HeadMotors.nodYes();
-        });
-
-        // Testing Button #3: Reset head motor positions (X, Y)
-        // ToDo: I actually don't know if its okay to have them both running at hte same time?
-        // ToDo: The second one probably fails instantly because of the cooldown feature...
-        // ToDo: So something would need to be added here, maybe like the ability to "queue" movements up?
-        // ToDo: Also could just add a check within here and click it twice: if posX != 0: resetX(); if posY !=0: resetY();
-        buttonTester3.setOnClickListener(v -> {
-            Log.w(TAG, String.format("%s Testing Button #3 pressed.", TAG));
-            Emotions.setMood(FacialExpression.SAD, 2_000L);
-
-            HeadMotors.logHeadMotorStatus();
-            HeadMotors.resetYes();
-            HeadMotors.resetNo ();
-        });
-
-        // Testing Button #4:
-        buttonTester4.setOnClickListener(v -> {
-            Log.w(TAG, String.format("%s Testing Button #4 pressed. (toggle Sleep behavior)", TAG));
-
-            if (BehaviorTasks.isRunning) { BehaviorTasks.stopCurrentTask(); }
-            else                         { BehaviorTasks.startSleepTask (); }
-        });
-
-        // Testing Button #5: ToDo: Testing for the BehaviorInstructions for Sleep and WakeUp... no idea what these will do
-        buttonTester5.setOnClickListener(v -> {
-            Log.w(TAG, String.format("%s Testing Button #5 pressed. (toggle Wake behavior)", TAG));
-
-            if (BehaviorTasks.isRunning) { BehaviorTasks.stopCurrentTask(); }
-            else                         { BehaviorTasks.startWakeUpTask(null); }
-        });
-
-        // -----------------------------------------------------------------------
-        // Emergency Stop Motors
-        // -----------------------------------------------------------------------
-        // Testing Button #2: Emergency stop any motors/movements
-        buttonTester2.setOnClickListener(v -> {
-            Log.w(TAG, String.format("%s !!! Emergency Stop Button Activated !!! -------", TAG));
-            RotateBody.emergencyStopMotors();
-            HeadMotors.stopAll();
+        buttonStartEnd.setOnClickListener(v -> {
+            Log.w(TAG, String.format("%s StartEnd Button pressed", TAG)); toggleChat();
         });
     }
+
 
 }
