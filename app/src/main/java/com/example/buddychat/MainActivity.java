@@ -6,8 +6,6 @@ import android.widget.TextView;
 import android.widget.Button;
 import android.widget.Toast;
 
-import java.util.Locale;
-
 // Buddy SDK
 import com.bfr.buddysdk.BuddySDK;
 import com.bfr.buddysdk.BuddyActivity;
@@ -22,16 +20,13 @@ import com.example.buddychat.network.model.AuthListener;
 
 import com.example.buddychat.network.ws2.ChatSocketManager;
 
-import com.example.buddychat.network.ws.ChatUiCallbacks;
 import com.example.buddychat.chat.ChatController;
 import com.example.buddychat.chat.ChatStatus;
 
 // Buddy Features
 import com.example.buddychat.tts.SetupTTS;
-import com.example.buddychat.utils.motors.RotateBody;
 import com.example.buddychat.utils.SensorListener;
 import com.example.buddychat.utils.behavior.Emotions;
-import com.example.buddychat.utils.motors.HeadMotors;
 import com.example.buddychat.utils.behavior.BehaviorTasks;
 
 // BuddySDK.Speech wrappers
@@ -42,7 +37,7 @@ import com.example.buddychat.stt.BuddySTT;
 
 // [NEW] New stuff
 import com.example.buddychat.network.api.TokenManager;
-import com.example.buddychat.network.api.Profile;
+import com.example.buddychat.network.api.ProfileManager;
 
 
 // =======================================================================
@@ -86,7 +81,7 @@ public class MainActivity extends BuddyActivity {
 
         // Initial login in app startup
         NetworkUtils.pingHealth();  // Test the API
-        TokenManager.initialLogin(Profile::fetchProfile);
+        TokenManager.initialLogin(ProfileManager::fetchProfile);
 
 
 
