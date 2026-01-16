@@ -21,6 +21,7 @@ import com.example.buddychat.chat.StatusController;
 /// Refers to a separate ChatListener utility for handling messages
 public final class ChatSocketManager {
     private static final String TAG  = "[DPU_ChatSocketManager]";
+    private ChatSocketManager() {} // no instances
 
     // The single active connection
     private static WebSocket SOCKET;
