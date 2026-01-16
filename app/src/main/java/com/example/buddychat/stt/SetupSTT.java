@@ -15,9 +15,11 @@ import com.bfr.buddysdk.BuddySDK;
 import java.util.Locale;
 
 // ================================================================================
-// Setup for Built-in Speech-to-Text -- only called once, during initialization
+// Setup for Built-in Speech-to-Text
 // ================================================================================
+// Only called once, from 'BuddySTT', during initialization.
 // ToDo: Should maybe show Toast if the task initialization fails...
+// ToDo: Add retries where we use Cerence if Google isn't available (?)
 public final class SetupSTT {
     private static final String TAG = "[DPU_SetupSTT]";
 
@@ -57,6 +59,7 @@ public final class SetupSTT {
     // --------------------------------------------------------------------------------
     // Initialization -- Called once in MainActivity.onCreate
     // --------------------------------------------------------------------------------
+    // ToDo: Add retry logic to use Cerence if Google fails
     public static STTTask initializeSTTTask(Context context) {
         // Check microphone permission
         if (SetupSTT.notMicPermission(context)) { SetupSTT.requestMicPermission(context); }

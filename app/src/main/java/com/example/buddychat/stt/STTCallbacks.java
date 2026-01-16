@@ -1,29 +1,22 @@
 package com.example.buddychat.stt;
 
 import android.annotation.SuppressLint;
-import android.os.Handler;
-import android.os.Looper;
 import android.util.Log;
 
 // App code
 import com.bfr.buddy.ui.shared.FacialExpression;
+import com.example.buddychat.chat.StatusController;
 import com.example.buddychat.utils.behavior.Emotions;
 import com.example.buddychat.utils.behavior.UserIntent;
 import com.example.buddychat.utils.audio_triangulation.AudioTracking;
 import com.example.buddychat.utils.audio_triangulation.AngleBuckets;
 import com.example.buddychat.utils.audio_triangulation.AngleBuckets.Bucket;
 
-import com.example.buddychat.chat.ChatStatus;
-import com.example.buddychat.chat.ChatController;
-
 // ================================================================================
 // Handles Recognized Speech Events
 // ================================================================================
 public final class STTCallbacks  {
     private static final String TAG  = "[DPU_STTCallbacks]";
-
-    // Handler to hop onto UI thread
-    private final Handler ui = new Handler(Looper.getMainLooper());
 
     // Initialization
     private final UtteranceCallback utteranceCallback;
@@ -36,39 +29,41 @@ public final class STTCallbacks  {
 
     @SuppressLint("DefaultLocale")
     public void onText(String utterance, float confidence, String rule) {
-        // Operations that need to happen on detection of a user utterance
-        final boolean chatEnded   = onUserUtterance(utterance);
-        final boolean awakeStatus = ChatStatus.isRunning();
+        Log.i(TAG, String.format("%s Utt: %s (conf: %.3f, rule: %s)", TAG, utterance, confidence, rule));
 
-        // Do some stuff on the UI thread
-        ui.post(() -> {
-            // Send the message over the WebSocket
-            utteranceCallback.sendString(utterance);
+        // 1. Operations that need to happen on detection of a user utterance
+        final boolean chatEnded = onUserUtterance(utterance);
 
-            // ToDo: IDK how this interaction is going to work at all
-            if (chatEnded && awakeStatus) { ChatController.end(); }
+        // 2. If the robot isn't officially "Active", ignore the speech.
+        if (!StatusController.isActive()) {
+            Log.w(TAG, String.format("%s Ignored speech (Chat is not active)", TAG));
+            return;
+        }
 
-            // Logging the message
-            Log.i(TAG, String.format("%s Utt: %s (conf: %.3f, rule: %s)", TAG, utterance, confidence, rule));
-        });
+        // 3. Did the user ask to end the chat?
+        if (chatEnded) {
+            Log.w(TAG, String.format("%s User intent detected: END CHAT", TAG));
+            StatusController.stop(); // StatusController handles the shutdown
+            return;
+        }
+
+        // 4. Send the message over the WebSocket
+        utteranceCallback.sendString(utterance);
     }
 
 
     // --------------------------------------------------------------------------------
-    // Other Helpers
+    // Check for flags indicating we need to do stuff (emotions, ending the chat, etc.)
     // --------------------------------------------------------------------------------
     /** Method that runs when a user's utterance is detected. */
     private boolean onUserUtterance(String utterance) {
         // Set Buddy's face to "THINKING" while we wait for the backend
         Emotions.setMood(FacialExpression.THINKING);
 
-        // Audio Triangulation -- ToDo: All audio tracking disabled for the demo
-        //final float  averageAngle = AudioTracking.getRecentAngle();
-        //final Bucket bucket       = AngleBuckets.classify(averageAngle);
-        //final String angleLabel   = AngleBuckets.label(bucket);
-        //final String audLog = String.format("(AudioLoc=%s, Angle=%.1f)", angleLabel, averageAngle);
+        // Audio Triangulation
+        //final String audLog = audioTriangulation();
 
-        // User intent detection (for ending the chat) -- ToDo: Here is where I think we would actually end the chat
+        // User intent detection (for ending the chat)
         final boolean userEndChat = UserIntent.isEndChat(utterance);
         final String userLog = String.format("EndChat=%s", userEndChat);
 
@@ -77,5 +72,18 @@ public final class STTCallbacks  {
 
         return userEndChat;
     }
+
+
+    // ToDo: All audio tracking disabled for the demo
+    @SuppressLint("DefaultLocale")
+    private String audioTriangulation() {
+        final float  averageAngle = AudioTracking.getRecentAngle();
+        final Bucket bucket       = AngleBuckets.classify(averageAngle);
+        final String angleLabel   = AngleBuckets.label(bucket);
+        return String.format("(AudioLoc=%s, Angle=%.1f)", angleLabel, averageAngle);
+
+    }
+
+
 
 }

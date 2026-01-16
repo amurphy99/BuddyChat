@@ -99,8 +99,10 @@ public final class StatusController {
             Emotions.setMood(FacialExpression.HAPPY, 2_000L);
 
             // Say Hello -- ToDo: Should I use "speak happy" here?
+            // ToDo: Where does the STT get started back up?
             //BuddyTTS.speak("Hello! I am ready to chat.");
 
+            BuddySTT.start();
         });
     }
 
@@ -112,6 +114,8 @@ public final class StatusController {
         // Say "goodbye" before doing the sleep animation
         BuddyTTS.speak("Okay, thank you for talking today!", () -> {
             Emotions.setMood(FacialExpression.TIRED);
+
+            BuddySTT.pause();
 
             // ToDo: Toggle STT+TTS off
             Log.i(TAG, String.format("%s Chat ended; STT & TTS paused.", TAG));

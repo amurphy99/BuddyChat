@@ -3,16 +3,11 @@ package com.example.buddychat.stt;
 import android.content.Context;
 import android.util.Log;
 
-import java.util.concurrent.atomic.AtomicBoolean;
-
 import com.bfr.buddy.speech.shared.ISTTCallback;
 import com.bfr.buddy.speech.shared.STTResult;
 import com.bfr.buddy.speech.shared.STTResultsData;
 import com.bfr.buddysdk.services.speech.STTTask;
 import com.bfr.buddysdk.BuddySDK;
-
-import com.example.buddychat.chat.ChatHub;
-import com.example.buddychat.chat.ChatStatusListener;
 
 // ================================================================================
 // Wrapper class around BuddySDK.Speech for Speech-to-Text
@@ -35,7 +30,6 @@ public final class BuddySTT {
     // --------------------------------------------------------------------------------
     /** Sets up microphone permissions, STTCallbacks, and the BuddySDK STTTask. */
     public static void init(Context context, STTCallbacks callbacks) {
-        SetupSTT.checkMicPermission(context);
         sttCallbacks = callbacks;
         task = SetupSTT.initializeSTTTask(context);
     }
@@ -66,19 +60,5 @@ public final class BuddySTT {
         Log.d(TAG, String.format("%s STT start SUCCESS", TAG));
         return true;
     }
-
-
-    // ================================================================================
-    // Link to ChatHub
-    // ================================================================================
-    // set by ChatHub.onStart(cancel). When cancel.get() == true, we should not speak.
-    private static volatile AtomicBoolean cancelRef = null;
-
-    // Listener Adapter
-    public static void registerWithHub(ChatHub hub) { hub.addListener(LISTENER); }
-    private static final ChatStatusListener LISTENER = new ChatStatusListener() {
-        @Override public boolean onStart(AtomicBoolean cancel) { cancelRef = cancel; return start(); }
-        @Override public void    onStop () { stop(); cancelRef = null; }
-    };
 
 }
