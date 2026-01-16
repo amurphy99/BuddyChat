@@ -9,3 +9,52 @@
 * Then the "Start Chat" will establish a connection to the WebSocket server.
 * Clicking the "Hello" button will send a demo message through the connection, and we receive the servers response.
 * Finally, the "Start Chat" button should now say "End Chat", and we can click that again to finish the chat.
+
+
+
+<hr>
+
+
+```
+
+================================================================================
+                               SYSTEM ARCHITECTURE
+================================================================================
+
+      [ USER INTERFACE ]                    [ STATE CONTROL ]
+ +--------------------------+          +-------------------------+
+ |      MainActivity        |          |    StatusController     |
+ |                          |--------->|                         |
+ |                          |  Start/  | - Tracks Active/Sleep   |
+ | - Toggle Button          |<---------| - Orchestrates Startup  |
+ | - Shows Connection State |  Update  | - Handles Shutdown      |
+ +--------------------------+    UI    +------------+------------+
+                                                    |
+             +--------------------------------------+---------------------+
+             | Controls (Start/Stop)                                      |
+             v                                                            v
+ +--------------------------+         +--------------------------+  +------------+
+ |        BuddySTT          |         |    ChatSocketManager     |  |  BuddyTTS  |
+ |                          |         |     (Network Layer)      |  |            |
+ | - Wraps Robot SDK Task   |         | - Manages WebSocket      |  | - SDK Wrap |
+ | - Filters "Stop" cmds    |         | - Auto-Retries Login     |  | - Queueing |
+ +-----------+--------------+         +------------+-------------+  +------+-----+
+             |                                     |                       ^
+             | (1) User Speech ("Hello")           | (2) Send JSON         |
+             +------------------------------------>|                       |
+                                                   v                       |
+                                          ( Cloud Backend )                |
+                                                   |                       |
+                                                   | (3) Response Text     |
+                                                   +-----------------------+
+
+================================================================================
+
+
+```
+
+
+
+
+
+
