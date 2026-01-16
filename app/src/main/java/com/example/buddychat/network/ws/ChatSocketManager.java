@@ -13,7 +13,6 @@ import com.example.buddychat.network.BackendURLs;
 import com.example.buddychat.network.api.TokenManager;
 
 import com.example.buddychat.chat.StatusController;
-import com.example.buddychat.network.ws2.ChatUICallbacks;
 
 // ================================================================================
 // WebSocket Manager
@@ -62,7 +61,6 @@ public final class ChatSocketManager {
         SOCKET = CLIENT.newWebSocket(req, listenerInstance);
     }
 
-
     // --------------------------------------------------------------------------------
     // Retry the connection
     // --------------------------------------------------------------------------------
@@ -75,11 +73,10 @@ public final class ChatSocketManager {
             }, 3000);
         } else {
             Log.e(TAG, "All connection retries failed.");
-            //StatusController.showError("Connection Failed");
+            StatusController.showError("Connection Failed");
             StatusController.stop();
         }
     }
-
 
     // ================================================================================
     // WebSocket Utility
@@ -92,16 +89,13 @@ public final class ChatSocketManager {
 
     /** Send a string (automatically escapes quotes/special chars) */
     public static void sendString(String text) {
+        // Use JSONObject to safely format the string
         try {
-            // Use JSONObject to safely format the string
             JSONObject json = new JSONObject();
             json.put("type", "transcription");
             json.put("data", text);
             sendJson(json.toString());
-
-        } catch (Exception e) {
-            Log.e(TAG, "Failed to format JSON", e);
-        }
+        } catch (Exception e) { Log.e(TAG, "Failed to format JSON", e); }
     }
 
     /** End the chat and clean up variables (sends a logic message first). */
@@ -113,7 +107,7 @@ public final class ChatSocketManager {
                 json.put("data", System.currentTimeMillis());
                 SOCKET.send(json.toString());
 
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) { }
 
             // Close code 1000 = Normal Closure
             SOCKET.close(1000, "user ended"); SOCKET = null;
