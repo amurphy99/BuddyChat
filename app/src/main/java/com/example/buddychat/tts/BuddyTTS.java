@@ -1,7 +1,5 @@
 package com.example.buddychat.tts;
 
-import java.util.concurrent.atomic.AtomicBoolean;
-
 import android.util.Log;
 import androidx.annotation.Nullable;
 
@@ -11,15 +9,11 @@ import com.bfr.buddy.ui.shared.LabialExpression;
 import com.bfr.buddysdk.BuddySDK;
 
 import com.example.buddychat.chat.ChatController;
-import com.example.buddychat.utils.behavior.Emotions;
-import com.example.buddychat.chat.ChatHub;
-import com.example.buddychat.chat.ChatStatusListener;
 
 // ================================================================================
 // Wrapper class around BuddySDK.Speech for Text-to-Speech
 // ================================================================================
 // SetupTTS makes sure everything is loaded on app start
-// ToDo: I might not actually care about 'cancelRef' here...
 public final class BuddyTTS {
     private static final String TAG = "[DPU_BuddyTTS]";
     private BuddyTTS() {} // static-only class
@@ -50,19 +44,5 @@ public final class BuddyTTS {
     // Shared Helpers (log on speech completion & execute a callback on success)
     private static void speechCompleted(String s) { Log.d(TAG, String.format("%s TTS Speech completed: %s", TAG, s)); }
     private static void runCb(@Nullable Runnable cb) { if (cb != null) ChatController.mainExecutor().execute(cb); }
-
-
-    // ================================================================================
-    // Link to ChatHub
-    // ================================================================================
-    // set by ChatHub.onStart(cancel). When cancel.get() == true, we should not speak.
-    private static volatile AtomicBoolean cancelRef = null;
-
-    // Listener Adapter
-    public static void registerWithHub(ChatHub hub) { hub.addListener(LISTENER); }
-    private static final ChatStatusListener LISTENER = new ChatStatusListener() {
-        @Override public boolean onStart(AtomicBoolean cancel) { cancelRef = cancel; return start(); }
-        @Override public void    onStop (                    ) { stop(); cancelRef = null; }
-    };
 
 }
