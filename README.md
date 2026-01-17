@@ -14,6 +14,14 @@
 
 <hr>
 
+# ToDo
+
+* `ChatHub` should be vready to remove
+* `ChatController` & `ChatStatus` still have usages throughout the project that need to be replaced with `StatusController`
+
+
+
+<hr>
 
 ```
 
