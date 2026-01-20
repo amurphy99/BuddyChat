@@ -1,4 +1,4 @@
-package com.example.buddychat.utils;
+package com.example.buddychat.utils.sensors;
 
 import android.os.RemoteException;
 import android.util.Log;
@@ -20,7 +20,6 @@ import com.bfr.buddysdk.BuddySDK;
 
 // Classes using the resulting sensor data
 import com.example.buddychat.utils.audio_triangulation.AudioTracking;
-import com.example.buddychat.utils.sensors.TouchSensors;
 
 // ====================================================================
 // SensorListener
