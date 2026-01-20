@@ -14,8 +14,12 @@ import com.bfr.buddysdk.BuddySDK;
 // ================================================================================
 // ToDo: Maybe need to pause this while it talks, does that mean we shouldn't do listen continuous?
 // ToDo: Maybe need to cancel the other stuff onError -- or "retry" with this a few times...
-// On initialization we call SetupSTT to get an STTTask object from the SDK that we can use.
-// Start, pause, and stop use that task as expected.
+/** BuddySTT <br>
+ * On initialization we call SetupSTT to get an STTTask object from the SDK that we can use. <br>
+ * Start, pause, and stop use that task as expected. <br>
+ * We keep "listen continuous" because if we didn't, it would be a few seconds before we might be
+ * able to start again. By just pausing and resuming, we should be able to have the same behavior.
+ * See page 59 of the BuddySDK user guide for more details (version 2.4). */
 public final class BuddySTT {
     private static final String TAG = "[DPU_BuddySTT]";
     private BuddySTT() {} // Static-only class
@@ -40,9 +44,9 @@ public final class BuddySTT {
     // --------------------------------------------------------------------------------
     // Speech-to-Text Usage
     // --------------------------------------------------------------------------------
-    public  static void    pause() { if (ready()) task.pause(); Log.d(TAG, String.format("%s STT paused",  TAG)); }
-    private static void    stop () { if (ready()) task.stop (); Log.d(TAG, String.format("%s STT stopped", TAG)); }
-    public  static boolean start() { // ToDo: changed this to public for now
+    public static void    pause() { if (ready()) task.pause(); Log.d(TAG, String.format("%s STT paused",  TAG)); }
+    public static void    stop () { if (ready()) task.stop (); Log.d(TAG, String.format("%s STT stopped", TAG)); }
+    public static boolean start() {
         if (!ready()) { Log.e(TAG, String.format("%s STT start FAILURE (not available)", TAG)); return false; }
 
         // Start the STTTask using the callbacks object we were initialized with

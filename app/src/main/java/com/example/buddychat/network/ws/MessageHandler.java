@@ -2,6 +2,7 @@ package com.example.buddychat.network.ws;
 
 import android.util.Log;
 
+import com.example.buddychat.stt.BuddySTT;
 import com.example.buddychat.tts.BuddyTTS;
 import com.example.buddychat.utils.behavior.Emotions;
 import com.example.buddychat.utils.behavior.IntentDetector;
@@ -46,11 +47,11 @@ public final class MessageHandler {
         // Return early if the message is empty
         if (body.equals("(empty)")) { return; }
 
+        // Speak the response ToDo: Just changed this to go before IntentDetector
+        BuddyTTS.speak(body, BuddySTT::start); // ToDo: Also set this to restart the STT service on completion
+
         // Check the LLMs utterance for action cues (e.g. nod yes for "of course", "sure", etc...)
         IntentDetector.IntentDetection(body);
-
-        // Speak the response
-        BuddyTTS.speak(body);
     }
 
     /** Handle "affect" data from the backend (valence+arousal emotion values for the face). */

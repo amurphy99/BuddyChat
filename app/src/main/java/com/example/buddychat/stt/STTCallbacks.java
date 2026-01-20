@@ -27,9 +27,9 @@ public final class STTCallbacks  {
     // --------------------------------------------------------------------------------
     public void onError(String e) { Log.e(TAG, String.format("%s error: %s", TAG, e)); }
 
-    @SuppressLint("DefaultLocale")
     public void onText(String utterance, float confidence, String rule) {
         Log.i(TAG, String.format("%s Utt: %s (conf: %.3f, rule: %s)", TAG, utterance, confidence, rule));
+        BuddySTT.pause(); // ToDo: Testing out pausing/resuming STT to avoid double messages
 
         // 1. Operations that need to happen on detection of a user utterance
         final boolean chatEnded = onUserUtterance(utterance);
@@ -75,7 +75,7 @@ public final class STTCallbacks  {
 
 
     // ToDo: All audio tracking disabled for the demo
-    @SuppressLint("DefaultLocale")
+    @SuppressLint("DefaultLocale") // This isn't needed if you just log the string right away
     private String audioTriangulation() {
         final float  averageAngle = AudioTracking.getRecentAngle();
         final Bucket bucket       = AngleBuckets.classify(averageAngle);
