@@ -12,7 +12,7 @@ import com.example.buddychat.utils.behavior.BehaviorTasks;
 import com.example.buddychat.utils.behavior.Emotions;
 
 // ================================================================================
-// StatusController -- ToDo: Need to find all classes that used ChatHub and rework
+// StatusController
 // ================================================================================
 /** StatusController <br>
  * Control the chat starting and ending. Includes processes like STT, TTS, the
@@ -36,9 +36,9 @@ public final class StatusController {
         if (isChatActive.get()) { Log.w(TAG, String.format("%s Start called, but chat is already active. Ignoring.", TAG)); return; }
         Log.i(TAG, String.format("%s Starting Chat Sequence (Stage 1)...", TAG));
 
-        // 1. Enable all of the "basic processes"
-        BuddyTTS.start();  // LoadTTS is already done in MainActivity, so that is always ready (just calling it for fun)
-        BuddySTT.start();  // Starting STT here
+        // 1. Enable all of the "basic processes" ToDo: I think the start/end functions handle this now
+        //BuddyTTS.start();  // LoadTTS is already done in MainActivity, so that is always ready (just calling it for fun)
+        //BuddySTT.start();  // Starting STT here
 
         // 2. Connect to WebSocket (async)
         ChatSocketManager.connect(); // The SocketManager will call 'startSuccess()' if it works, or 'showError()' if it fails.
@@ -88,26 +88,23 @@ public final class StatusController {
 
 
     // --------------------------------------------------------------------------------
-    // Behavior Utilities (for start/end)
+    // Behavior Utilities (for start/end) (handles start & pause/stop of STT+TTS)
     // --------------------------------------------------------------------------------
-    /** Say final message and start sleep animation. */
+    /** Play wakeup animation, say initial message, & start speech-to-text. */
     private static void playBeginning() {
         Log.d(TAG, String.format("%s >>> Playing beginning behavior <<<", TAG));
+        BuddyTTS.start();
 
         // Wake Buddy up from the "SLEEP" BI
         BehaviorTasks.startWakeUpTask(() -> {
             Emotions.setMood(FacialExpression.HAPPY, 2_000L);
 
-            // Say Hello -- ToDo: Should I use "speak happy" here?
-            // ToDo: Where does the STT get started back up?
-            //BuddyTTS.speak("Hello! I am ready to chat.");
-
-            BuddySTT.start();
+            // Say Hello & start STT -- ToDo: Should I use "speak happy" here?
+            BuddyTTS.speak("Hello! How are you doing today?", BuddySTT::start);
         });
     }
 
-    /** Say final message and start sleep animation. */
-    // ToDo: Not sure how to handle STT and TTS (need to wait until here?)
+    /** Say final message, disable TTS+STT, and start sleep animation. */
     private static void playEnding() {
         Log.d(TAG, String.format("%s >>> Playing ending behavior <<<", TAG));
 
@@ -115,15 +112,14 @@ public final class StatusController {
         BuddyTTS.speak("Okay, thank you for talking today!", () -> {
             Emotions.setMood(FacialExpression.TIRED);
 
+            // Toggle STT+TTS off
+            BuddyTTS.stop ();
             BuddySTT.pause();
-
-            // ToDo: Toggle STT+TTS off
             Log.i(TAG, String.format("%s Chat ended; STT & TTS paused.", TAG));
 
+            // Start the sleep animation
             BehaviorTasks.startSleepTask();
         });
-
-
     }
 
 
