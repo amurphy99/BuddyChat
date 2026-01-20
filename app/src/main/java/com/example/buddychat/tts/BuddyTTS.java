@@ -8,7 +8,7 @@ import com.bfr.buddy.ui.shared.FacialExpression;
 import com.bfr.buddy.ui.shared.LabialExpression;
 import com.bfr.buddysdk.BuddySDK;
 
-import com.example.buddychat.chat.ChatController;
+import com.example.buddychat.utils.ThreadUtils;
 
 // ================================================================================
 // Wrapper class around BuddySDK.Speech for Text-to-Speech
@@ -43,6 +43,6 @@ public final class BuddyTTS {
 
     // Shared Helpers (log on speech completion & execute a callback on success)
     private static void speechCompleted(String s) { Log.d(TAG, String.format("%s TTS Speech completed: %s", TAG, s)); }
-    private static void runCb(@Nullable Runnable cb) { if (cb != null) ChatController.mainExecutor().execute(cb); }
+    private static void runCb(@Nullable Runnable cb) { ThreadUtils.runOnUiThread(cb); }
 
 }

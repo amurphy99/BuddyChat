@@ -8,7 +8,8 @@ import androidx.annotation.Nullable;
 import com.bfr.buddysdk.BuddySDK;
 import com.bfr.buddysdk.services.companion.Task;
 import com.bfr.buddysdk.services.companion.TaskCallback;
-import com.example.buddychat.chat.ChatController;
+
+import com.example.buddychat.utils.ThreadUtils;
 
 // =======================================================================
 // Controller for the BuddySDKs "BehaviorInstructions" Tasks
@@ -63,7 +64,7 @@ public final class BehaviorTasks {
     private static TaskCallback newTaskCallback(@Nullable Runnable onSuccessCb) {
         return new TaskCallback() {
             @Override public void onStarted(        ) { logStarted( ); }
-            @Override public void onSuccess(String s) { logSuccess(s); if (onSuccessCb != null) ChatController.mainExecutor().execute(onSuccessCb); }
+            @Override public void onSuccess(String s) { logSuccess(s); ThreadUtils.runOnUiThread(onSuccessCb); }
             @Override public void onCancel (        ) { logCancel ( ); }
             @Override public void onError  (String s) { logError  (s); }
             @Override public void onIntermediateResult(String s) { logInter(s); }

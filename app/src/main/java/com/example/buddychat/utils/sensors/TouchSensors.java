@@ -2,9 +2,8 @@ package com.example.buddychat.utils.sensors;
 
 import android.util.Log;
 
-import com.example.buddychat.chat.ChatStatus;
-import com.example.buddychat.chat.ChatController;
 import com.example.buddychat.utils.behavior.Emotions;
+import com.example.buddychat.chat.StatusController;
 
 // =======================================================================
 // TouchSensors
@@ -36,7 +35,7 @@ public final class TouchSensors {
         boolean touched = touch1 | touch2 | touch3;
         if (touched) {
             // Check status of things
-            final boolean awakeStatus = ChatStatus.isRunning();
+            final boolean awakeStatus = StatusController.isActive();
             final boolean inTimeout   = check();
             Log.i(TAG, String.format("%s %s Touched! (isAwake=%s, inTimeout=%s) (Motors: 1=%s, 2=%s, 3=%s)",
                     TAG, source, awakeStatus, inTimeout, touch1, touch2, touch3));
@@ -46,7 +45,7 @@ public final class TouchSensors {
 
             // If Buddy is awake set the "LOVE" expression; if Buddy is sleeping/the chat is off, then we need to start it
             if (awakeStatus) { Emotions.setMood("LOVE", 1_000L); }
-            else { ChatController.start(); }
+            else { StatusController.start(); }
         }
     }
 

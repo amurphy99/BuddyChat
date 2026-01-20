@@ -30,7 +30,7 @@ public final class StatusController {
     // --------------------------------------------------------------------------------
     // Public API (start & stop)
     // --------------------------------------------------------------------------------
-    /** Called by MainActivity (Button Press) or touch sensors.
+    /** Called by MainActivity (Button Press) or `utils.sensors.TouchSensors`.
      * Start "stage 1" -- initializes TTS & STT + WebSocket connection. If WS is succeeds it triggers start "stage 2." */
     public static void start() {
         if (isChatActive.get()) { Log.w(TAG, String.format("%s Start called, but chat is already active. Ignoring.", TAG)); return; }
