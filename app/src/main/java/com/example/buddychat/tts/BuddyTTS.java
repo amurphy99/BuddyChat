@@ -13,7 +13,7 @@ import com.example.buddychat.utils.ThreadUtils;
 // ================================================================================
 // Wrapper class around BuddySDK.Speech for Text-to-Speech
 // ================================================================================
-// SetupTTS makes sure everything is loaded on app start
+// 'SetupTTS.java makes' sure everything is already loaded on app start
 public final class BuddyTTS {
     private static final String TAG = "[DPU_BuddyTTS]";
     private BuddyTTS() {} // static-only class
@@ -22,9 +22,9 @@ public final class BuddyTTS {
     public static boolean start() { return SetupTTS.isReady(); }
     public static void    stop () { try { BuddySDK.Speech.stopSpeaking(); } catch (Throwable ignored) {} }
 
-    // ================================================================================
-    // Text-to-Speech (you have the option to do different
-    // ================================================================================
+    // --------------------------------------------------------------------------------
+    // Text-to-Speech (have the option to provide a callback on TTS completion)
+    // --------------------------------------------------------------------------------
     public static void speak(String text, @Nullable LabialExpression iExpression, @Nullable Runnable onSuccessCb) {
         if (SetupTTS.notReady()) { return; } // Ready checks
         if (iExpression == null) { iExpression = LabialExpression.SPEAK_NEUTRAL; }
