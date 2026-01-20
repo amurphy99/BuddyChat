@@ -17,10 +17,10 @@ import com.example.buddychat.network.ws.ChatSocketManager;
 import com.example.buddychat.network.api.TokenManager;
 import com.example.buddychat.network.api.ProfileManager;
 
-
 // Buddy Features
 import com.example.buddychat.tts.SetupTTS;
-import com.example.buddychat.utils.SensorListener;
+import com.example.buddychat.utils.motors.HeadMotors;
+import com.example.buddychat.utils.sensors.SensorListener;
 import com.example.buddychat.utils.behavior.Emotions;
 import com.example.buddychat.utils.behavior.BehaviorTasks;
 
@@ -43,9 +43,8 @@ public class MainActivity extends BuddyActivity {
     private TextView textUserInfo;   // Username (currently hidden)
     private Button   buttonStartEnd; // Start or end the chat/backend websocket connection
 
-    // WebSocket related
-    private          STTCallbacks      sttCallbacks;
-
+    // WebSocket related ToDo: IDK if this was needed anymore...
+    private STTCallbacks sttCallbacks;
 
     // ================================================================================
     // Startup code (should any of this go in onSDKReady() instead?)
@@ -58,7 +57,8 @@ public class MainActivity extends BuddyActivity {
 
         // Setup UI
         setContentView(R.layout.activity_main);
-        initializeUI(); wireButtons();
+        initializeUI();
+        wireButtons();
 
         // Initial login in app startup
         NetworkUtils.pingHealth();  // Test the API
@@ -66,7 +66,6 @@ public class MainActivity extends BuddyActivity {
 
         // WebSocket & STT callback objects (we pass the STT callback some things here like UI references, etc.)
         sttCallbacks  = new STTCallbacks(ChatSocketManager::sendString);
-
 
         // Register for updates about the chat status from StatusController
         StatusController.setListener(new StatusController.StateListener() {
@@ -91,8 +90,12 @@ public class MainActivity extends BuddyActivity {
         SetupTTS.loadTTS();
 
         // Setup USB sensor listeners (AudioTracking is enabled after the first time Buddy talks)
-        SensorListener.setupSensors(); SensorListener.EnableUsbCallback();
+        SensorListener.setupSensors();
+        SensorListener.EnableUsbCallback();
         SensorListener.setTouchSensorsEnabled(true);
+
+        // Check the motor status ToDo: Not sure if they need enabling here
+        HeadMotors.logHeadMotorStatus();
 
         // Set Buddy's behavior to "Sleep" mode until the chat is started
         BehaviorTasks.startSleepTask(); // ToDo: What order should these be in?
@@ -102,18 +105,24 @@ public class MainActivity extends BuddyActivity {
     // ================================================================================
     // System Behavior (Pause, Resume, Destroy)
     // ================================================================================
-    // ToDo: Ignoring these methods until not having them causes an error!
-    // ToDo: If we set onDestroy back up, only release our own stuff inside it, nothing SDK related
-    // ToDo: MAYBE onDestroy() we should make sure to exit some of our threads for the motor movement?
-    // ToDo: Disable USB callbacks would be called here, in like onDestroy().
-    // The wheels example project had onStop and onDestroy disable the wheels...
-    //@Override public void onPause  () { super.onPause  (); Log.i(TAG, String.format("%s <========== onPause ==========>",   TAG));}
-    //@Override public void onResume () { super.onResume (); Log.i(TAG, String.format("%s <========== onResume ==========>",  TAG));}
+    /** Only release our own stuff inside it, nothing SDK related... */
     @Override public void onDestroy() {
         Log.i(TAG, String.format("%s <========== onDestroy ==========>", TAG));
 
+        // Stop background timers
         TokenManager.stopTokenRefresher();
 
+        // Make sure Buddy stops talking/listening
+        StatusController.stop(); // Safe to call even if already stopped
+
+        // Clean up sensors ToDo: Audio would go here if it was enabled
+        SensorListener.setTouchSensorsEnabled(false);
+        SensorListener.DisableUsbCallback();
+
+        // Clean up motors ToDo: Would call stop from RotateBody here if it was enabled
+        HeadMotors.stopAll();
+
+        // The super method gets called LAST so we can clean up our own resources first
         super.onDestroy();
     }
 
@@ -121,17 +130,12 @@ public class MainActivity extends BuddyActivity {
     // Other Helper Methods
     // ================================================================================
     /** Toggles the chat state. We rely on StatusController to track if we are running or not.
-     * Note: We do NOT update the button text here manually.
-     * We wait for the StatusController to tell us the state actually changed.
-     */
+     * Note: We do NOT update the button text here manually. We wait for the StatusController to tell us the state actually changed. */
     public void toggleChat() {
         // Robot is running -> Tell it to Stop; Robot is sleeping -> Tell it to Start
         if (StatusController.isActive()) { StatusController.stop (); }
         else                             { StatusController.start(); }
     }
-
-
-
 
     // --------------------------------------------------------------------------------
     // UI Elements
@@ -146,20 +150,23 @@ public class MainActivity extends BuddyActivity {
     private void wireButtons() {
         // Start or end the chat/backend websocket connection
         buttonStartEnd.setOnClickListener(v -> {
-            Log.w(TAG, String.format("%s StartEnd Button pressed", TAG)); toggleChat();
+            Log.w(TAG, String.format("%s StartEnd Button pressed", TAG));
+            toggleChat();
         });
     }
 
-    /** Update the start/end chat button. */
+    /** Updates button appearance based on state. */
     private void updateButton(final boolean isActive) {
-        // Must run on UI Thread because StatusController is on a background thread
+        // StatusController runs on bg thread, so we must wrap in runOnUiThread
         runOnUiThread(() -> {
             if (isActive) {
-                buttonStartEnd.setText(R.string.start_chat);
-                buttonStartEnd.setBackgroundColor(getColor(R.color.teal_200));
-            } else {
+                // If Active -> Button should allow stopping
                 buttonStartEnd.setText(R.string.end_chat);
                 buttonStartEnd.setBackgroundColor(getColor(R.color.purple_700));
+            } else {
+                // If Inactive -> Button should allow starting
+                buttonStartEnd.setText(R.string.start_chat);
+                buttonStartEnd.setBackgroundColor(getColor(R.color.teal_200));
             }
         });
     }
