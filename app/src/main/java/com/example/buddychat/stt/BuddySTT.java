@@ -30,8 +30,8 @@ public final class BuddySTT {
     // --------------------------------------------------------------------------------
     /** Sets up microphone permissions, STTCallbacks, and the BuddySDK STTTask. */
     public static void init(Context context, STTCallbacks callbacks) {
-        sttCallbacks = callbacks;
         task = SetupSTT.initializeSTTTask(context);
+        sttCallbacks = callbacks;
     }
 
     // Check if the task (1) was initialized and (2) if the task is ready

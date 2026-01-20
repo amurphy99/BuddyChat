@@ -20,8 +20,10 @@ import java.util.Locale;
 // Only called once, from 'BuddySTT', during initialization.
 // ToDo: Should maybe show Toast if the task initialization fails...
 // ToDo: Add retries where we use Cerence if Google isn't available (?)
+// ToDo: Need to find out through logs what that looks like when it happens...
 public final class SetupSTT {
     private static final String TAG = "[DPU_SetupSTT]";
+    private SetupSTT() {} // no instances
 
     // Microphone permissions
     private static final int      REQ_PERM  = 9001;
