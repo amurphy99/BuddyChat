@@ -8,9 +8,9 @@ Buddy robot "frontend" implementation with our chat app.
   * Then inside of `MainActivity.java` you can attach listeners to the buttons and programmatically modify each element as needed.
 
 ```
-================================================================================
-                               SYSTEM ARCHITECTURE
-================================================================================
+======================================================================================
+                                  SYSTEM ARCHITECTURE
+======================================================================================
 
                                 +---------------------------+
                                 |      MainActivity         |
@@ -100,9 +100,9 @@ Not exact -- some systems offload functionality to other helpers.
 
 
 ```
-================================================================================
-SYSTEM LIFECYCLE & DATA FLOW
-================================================================================
+======================================================================================
+                             SYSTEM LIFECYCLE & DATA FLOW
+======================================================================================
 
 1. STARTUP SEQUENCE
    [User Click] -> StatusController.start()
