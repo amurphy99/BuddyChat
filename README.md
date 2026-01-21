@@ -66,11 +66,11 @@ Buddy robot "frontend" implementation with our chat app.
   * There was an idea to do it in a way kind of similar to the UIUtils class, but I don't remember how...
   * Also more in `UiUtils`
 
-# If i am able to access the logs during a live chat, there are a bunch of things I need to do
+### If i am able to access the logs during a live chat, there are a bunch of things I need to do
   * Figure out if the emotion should be set with the behaviors (also should it be before or after?)
   * Figure out why sometimes when it wakes up it also does a little movement with the wheels
 
-# Things to watch for when testing
+### Things to watch for when testing
 * Should we use speak happy ever (especially on wakeup)?
 * On wakeup does it do the wheels spinning back and forth thing?
 * IDK
