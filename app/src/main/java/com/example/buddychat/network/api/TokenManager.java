@@ -5,6 +5,7 @@ import android.os.Looper;
 import android.util.Log;
 
 import com.example.buddychat.network.NetworkUtils;
+import com.example.buddychat.utils.UiUtils;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -16,6 +17,7 @@ import java.util.concurrent.TimeUnit;
 // ToDo: Maybe use synchronized here on the first call? Or somehow freeze the state...
 public final class TokenManager {
     private static final String TAG  = "[DPU_TokenManager]";
+    private TokenManager() {} // no instances
 
     private static volatile String          authToken;
     private static ScheduledExecutorService scheduler;
@@ -84,7 +86,7 @@ public final class TokenManager {
                 @Override public void run() { login(retries - 1, isInitialSetup, onSuccessAction); } }, 2000); // 2000ms delay
         } else {
             Log.e(TAG, String.format("%s All login attempts failed.", TAG));
-            // ToDo: Notify the UI that the Robot is offline?
+            UiUtils.showToast("All login attempts failed.", 1);
         }
     }
 
