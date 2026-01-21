@@ -16,16 +16,17 @@ import com.example.buddychat.utils.behavior.Emotions;
 // ================================================================================
 /** StatusController <br>
  * Control the chat starting and ending. Includes processes like STT, TTS, the
- * WebSocket connection, and the beginning/ending behaviors (sleep/wake).
- */
+ * WebSocket connection, and the beginning/ending behaviors (sleep/wake). */
 public final class StatusController {
     private static final String TAG = "[DPU_StatusController]";
     private StatusController() {} // no instances
 
     // Thread-safe flag: true = Awake, Talking, WS Connected; false = Asleep, Idle, WS Disconnected
     private static final AtomicBoolean isChatActive = new AtomicBoolean(false);
-
     public static boolean isActive() { return isChatActive.get(); }
+
+    // Flag for if the user clicks the stop button while we are still connecting the websocket
+    private static final AtomicBoolean stopRequested = new AtomicBoolean(false);
 
     // --------------------------------------------------------------------------------
     // Public API (start & stop)
@@ -34,6 +35,7 @@ public final class StatusController {
      * Start "stage 1" -- initializes TTS & STT + WebSocket connection. If WS is succeeds it triggers start "stage 2." */
     public static void start() {
         if (isChatActive.get()) { Log.w(TAG, String.format("%s Start called, but chat is already active. Ignoring.", TAG)); return; }
+        stopRequested.set(false); // Reset flag
         Log.i(TAG, String.format("%s Starting Chat Sequence (Stage 1)...", TAG));
 
         // 1. Enable all of the "basic processes" ToDo: I think the start/end functions handle this now
@@ -45,7 +47,10 @@ public final class StatusController {
     }
 
     /** Stops the chat cleanly (UI button press or "stop chat" voice command). */
-    public static void stop() { stopInternal("User requested stop"); }
+    public static void stop() {
+        stopRequested.set(true); // Raise flag immediately
+        stopInternal("User requested stop");
+    }
 
 
     // --------------------------------------------------------------------------------
@@ -53,6 +58,13 @@ public final class StatusController {
     // --------------------------------------------------------------------------------
     /** Stage 2: WebSocket is connected. The robot is now "Online". Wake up the robot and say hello. */
     public static void startSuccess() {
+        // GATEKEEPER CHECK: Immediately kill the socket we just opened
+        if (stopRequested.get()) {
+            Log.w(TAG, "Socket connected, but Stop was requested. Aborting WakeUp.");
+            ChatSocketManager.endChat();
+            return;
+        }
+        // Successfully start the websocket connection; handle the robots startup
         Log.i(TAG, "WebSocket Connected. Entering Stage 2 (Wake Up).");
         UiUtils.showToast("Chat Connected!");
         updateState(true);
@@ -70,6 +82,13 @@ public final class StatusController {
     // --------------------------------------------------------------------------------
     // Internal Logic
     // --------------------------------------------------------------------------------
+    /** Force reset all state variables. Call ONLY from MainActivity.onCreate. */
+    public static void forceReset() {
+        isChatActive .set(false);
+        stopRequested.set(false);
+    }
+
+    /** Internal logic for ending a chat. */
     private static void stopInternal(String reason) {
         Log.i(TAG, String.format("%s Stopping Chat. Reason: %s", TAG, reason));
 
