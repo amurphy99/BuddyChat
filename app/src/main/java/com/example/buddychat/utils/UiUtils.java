@@ -13,22 +13,33 @@ import com.example.buddychat.MainApplication;
 public class UiUtils {
     private static final String TAG  = "[DPU_UiUtils]";
 
-    // ToDo: Might want to make a helper to set UI element text? Like the hidden userInfo one or the start/end button
-    // textUserInfo.setText(String.format("%s %s | %s", p.plwd.first_name, p.plwd.last_name, p.plwd.username));
+    // Threading Helper
+    private static void runOnMain(Runnable action) {
+        if (Looper.myLooper() == Looper.getMainLooper()) { action.run(); }
+        else { new Handler(Looper.getMainLooper()).post(action); }
+    }
 
-    // Helper to show short toasts from ANY thread safely
-    public static void showToast(final String message) {
-        // This runs on the Main UI thread
-        new Handler(Looper.getMainLooper()).post(new Runnable() {
-            @Override public void run() {
-                Toast.makeText(MainApplication.getAppContext(), message, Toast.LENGTH_SHORT).show();
-            }
+    // --------------------------------------------------------------------------------
+    // Show Toast -- Helper to show toasts from ANY thread safely
+    // --------------------------------------------------------------------------------
+    /** Default to Short duration */
+    public static void showToast(String message) {
+        showToast(message, Toast.LENGTH_SHORT);
+    }
+
+    /** Master method for standard toasts */
+    public static void showToast(final String message, final int duration) {
+        runOnMain(() -> {
+            Toast.makeText(MainApplication.getAppContext(), message, duration).show();
         });
     }
 
     // --------------------------------------------------------------------------------
     // Safe Text Setters -- Safely update a TextView from any thread
     // --------------------------------------------------------------------------------
+    // ToDo: Might want to make a helper to set UI element text? Like the hidden userInfo one or the start/end button
+    // textUserInfo.setText(String.format("%s %s | %s", p.plwd.first_name, p.plwd.last_name, p.plwd.username));
+
     /// Use when there is a String variable.
     public static void updateText(final TextView view, final String text) {
         if (view == null) return; // Safety check
@@ -44,7 +55,6 @@ public class UiUtils {
             @Override public void run() { view.setText(stringResId); }
         });
     }
-
 
 
 
