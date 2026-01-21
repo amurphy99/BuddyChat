@@ -55,6 +55,9 @@ public class MainActivity extends BuddyActivity {
         super.onCreate(savedInstanceState);
         Log.i(TAG, String.format("%s <==================== onCreate ====================>", TAG));
 
+        // Guarantee a clean slate for StatusController every time the app opens
+        StatusController.forceReset();
+
         // Setup UI
         setContentView(R.layout.activity_main);
         initializeUI();
@@ -111,6 +114,9 @@ public class MainActivity extends BuddyActivity {
 
         // Stop background timers
         TokenManager.stopTokenRefresher();
+
+        // Unregister the UI listener so we don't try to update a dead screen
+        StatusController.setListener(null);
 
         // Make sure Buddy stops talking/listening
         StatusController.stop(); // Safe to call even if already stopped
