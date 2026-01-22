@@ -22,9 +22,9 @@ public class UiUtils {
     // --------------------------------------------------------------------------------
     // Show Toast -- Helper to show toasts from ANY thread safely
     // --------------------------------------------------------------------------------
-    /** Default to Short duration */
+    /** Default to Long duration. */
     public static void showToast(String message) {
-        showToast(message, Toast.LENGTH_SHORT);
+        showToast(message, Toast.LENGTH_LONG);
     }
 
     /** Master method for standard toasts */

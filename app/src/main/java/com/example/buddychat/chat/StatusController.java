@@ -3,7 +3,11 @@ package com.example.buddychat.chat;
 import java.util.concurrent.atomic.AtomicBoolean;
 import android.util.Log;
 
+// Buddy SDK
 import com.bfr.buddy.ui.shared.FacialExpression;
+import com.bfr.buddy.ui.shared.LabialExpression;
+
+// Buddy Features
 import com.example.buddychat.stt.BuddySTT;
 import com.example.buddychat.tts.BuddyTTS;
 import com.example.buddychat.network.ws.ChatSocketManager;
@@ -38,9 +42,9 @@ public final class StatusController {
         stopRequested.set(false); // Reset flag
         Log.i(TAG, String.format("%s Starting Chat Sequence (Stage 1)...", TAG));
 
-        // 1. Enable all of the "basic processes" ToDo: I think the start/end functions handle this now
+        // 1. Enable all of the "basic processes" ToDo: STT should be enabled, but it might be paused
         //BuddyTTS.start();  // LoadTTS is already done in MainActivity, so that is always ready (just calling it for fun)
-        //BuddySTT.start();  // Starting STT here
+        BuddySTT.start();  // Starting STT here ToDo: I still think I call this in other files, but going to try here again
 
         // 2. Connect to WebSocket (async)
         ChatSocketManager.connect(); // The SocketManager will call 'startSuccess()' if it works, or 'showError()' if it fails.
@@ -65,7 +69,7 @@ public final class StatusController {
             return;
         }
         // Successfully start the websocket connection; handle the robots startup
-        Log.i(TAG, "WebSocket Connected. Entering Stage 2 (Wake Up).");
+        Log.i(TAG, String.format("%s WebSocket Connected. Entering Stage 2 (Wake Up).", TAG ));
         UiUtils.showToast("Chat Connected!");
         updateState(true);
         playBeginning(); // Play "Wake Up" behavior
@@ -95,13 +99,12 @@ public final class StatusController {
         // 1. Check if we were actually awake
         boolean wasAwake = isChatActive.get();
         updateState(false); // Mark as offline immediately
-        UiUtils.showToast("Chat ended, Goodbye!");
 
         // 2. Kill the Network -- ToDo: Do I need to guard for if the chat wasn't active?
         ChatSocketManager.endChat(); // Sends "end_chat" JSON and closes socket
 
         // 3. If we were awake, be polite before dying. If we weren't awake (e.g., error during startup), just ensure the sleep pose is held.
-        if (wasAwake) { playEnding(); }
+        if (wasAwake) { UiUtils.showToast("Chat ended, Goodbye!"); playEnding(); }
         else          { Log.d(TAG, String.format("%s Robot was not active, skipping goodbye animation.", TAG)); }
     }
 
@@ -111,21 +114,21 @@ public final class StatusController {
     // --------------------------------------------------------------------------------
     /** Play wakeup animation, say initial message, & start speech-to-text. */
     private static void playBeginning() {
-        Log.d(TAG, String.format("%s >>> Playing beginning behavior <<<", TAG));
+        Log.i(TAG, String.format("%s --- >>> Playing beginning behavior <<< ---", TAG));
         BuddyTTS.start();
 
         // Wake Buddy up from the "SLEEP" BI
         BehaviorTasks.startWakeUpTask(() -> {
-            Emotions.setMood(FacialExpression.HAPPY, 2_000L);
+            Emotions.setMood(FacialExpression.SURPRISED, 3_000L);
 
             // Say Hello & start STT -- ToDo: Should I use "speak happy" here?
-            BuddyTTS.speak("Hello! How are you doing today?", BuddySTT::start);
+            BuddyTTS.speak("Hello! How are you doing today?", LabialExpression.SPEAK_HAPPY, BuddySTT::start);
         });
     }
 
     /** Say final message, disable TTS+STT, and start sleep animation. */
     private static void playEnding() {
-        Log.d(TAG, String.format("%s >>> Playing ending behavior <<<", TAG));
+        Log.i(TAG, String.format("%s --- >>> Playing ending behavior <<< --- ", TAG));
 
         // Say "goodbye" before doing the sleep animation
         BuddyTTS.speak("Okay, thank you for talking today!", () -> {

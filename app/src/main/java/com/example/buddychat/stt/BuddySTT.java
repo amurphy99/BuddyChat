@@ -39,7 +39,14 @@ public final class BuddySTT {
     }
 
     // Check if the task (1) was initialized and (2) if the task is ready
-    private static boolean ready() { if (task == null) { return false; } return task.isRunning(); }
+    private static boolean ready() {
+        if (task == null) {
+            Log.w(TAG, String.format("%s isReady() -> false | task is null", TAG));
+            return false;
+        }
+        Log.d(TAG, String.format("%s isReady() -> %s | task is not null", TAG, task.isRunning()));
+        return task.isRunning();
+    }
 
     // --------------------------------------------------------------------------------
     // Speech-to-Text Usage
@@ -47,7 +54,7 @@ public final class BuddySTT {
     public static void    pause() { if (ready()) task.pause(); Log.d(TAG, String.format("%s STT paused",  TAG)); }
     public static void    stop () { if (ready()) task.stop (); Log.d(TAG, String.format("%s STT stopped", TAG)); }
     public static boolean start() {
-        if (!ready()) { Log.e(TAG, String.format("%s STT start FAILURE (not available)", TAG)); return false; }
+        if (task == null) { Log.e(TAG, String.format("%s STT start FAILURE (not available)", TAG)); return false; }
 
         // Start the STTTask using the callbacks object we were initialized with
         task.start(LISTEN_CONTINUOUS, new ISTTCallback.Stub() {

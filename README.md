@@ -76,6 +76,18 @@ Buddy robot "frontend" implementation with our chat app.
 * IDK
 
 
+### New stuff from testing 01/21:
+* Need to cancel the login when stuff happens
+
+
+
+
+
+
+
+
+
+
 <hr>
 
 ## 🏗 Architecture

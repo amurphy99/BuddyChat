@@ -83,7 +83,7 @@ public class MainActivity extends BuddyActivity {
     // Called when the BuddyRobot SDK is ready
     // --------------------------------------------------------------------------------
     @Override public void onSDKReady() {
-        Log.i(TAG, "-------------- Buddy SDK ready --------------");
+        Log.i(TAG, "--------------------------- Buddy SDK ready ---------------------------");
 
         // Transfer the touch information to BuddyCore in the background
         BuddySDK.UI.setViewAsFace(findViewById(R.id.view_face));
@@ -110,7 +110,7 @@ public class MainActivity extends BuddyActivity {
     // ================================================================================
     /** Only release our own stuff inside it, nothing SDK related... */
     @Override public void onDestroy() {
-        Log.i(TAG, String.format("%s <========== onDestroy ==========>", TAG));
+        Log.i(TAG, String.format("%s <==================== onDestroy ====================>", TAG));
 
         // Stop background timers
         TokenManager.stopTokenRefresher();

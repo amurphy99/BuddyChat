@@ -53,7 +53,7 @@ public final class TokenManager {
     // --------------------------------------------------------------------------------
     /// Attempt to fetch token; retry if it fails
     private static void login(final int retries, final boolean isInitialSetup, final Runnable onSuccessAction) {
-        Log.d(TAG, String.format("%s Attempting login...", TAG));
+        Log.d(TAG, String.format("%s Attempting login... | isInitialSetup=%s", TAG, isInitialSetup));
         NetworkUtils.login(new NetworkUtils.AuthCallback() {
             @Override public void onSuccess(String    accessToken) { onLoginSuccess(accessToken, isInitialSetup, onSuccessAction); }
             @Override public void onError  (Throwable t          ) { onLoginError  (t,  retries, isInitialSetup, onSuccessAction); }
@@ -65,7 +65,7 @@ public final class TokenManager {
         authToken = accessToken;
         // Only start the refresh timer if this was the initial login attempt
         if (isInitialSetup) {
-            Log.d(TAG, String.format("%s Initial login successful. Starting refresh timer & executing next step...", TAG));
+            Log.i(TAG, String.format("%s Initial login successful. Starting refresh timer & executing next step...", TAG));
             startTokenRefresher();
             if (onSuccessAction != null) { onSuccessAction.run(); }
         }
@@ -81,7 +81,7 @@ public final class TokenManager {
     /// Handle retries with a small delay (2 seconds) so we don't spam the network
     private static void handleRetry(final int retries, final boolean isInitialSetup, final Runnable onSuccessAction) {
         if (retries > 0) {
-            Log.i(TAG, String.format("%s Retrying in 2 seconds... (%d retries remaining)", TAG, retries));
+            Log.d(TAG, String.format("%s Retrying in 2 seconds... (%d retries remaining)", TAG, retries));
             new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
                 @Override public void run() { login(retries - 1, isInitialSetup, onSuccessAction); } }, 2000); // 2000ms delay
         } else {

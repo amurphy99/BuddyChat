@@ -13,6 +13,7 @@ import com.example.buddychat.utils.ThreadUtils;
 // ================================================================================
 // Controller for the BuddySDKs "BehaviorInstructions" (BI) Tasks
 // ================================================================================
+// ToDo: So there isn't a "SLEEP" task type, but yawn leaves buddy in the tired mode after (I think)
 public final class BehaviorTasks {
     private static final String TAG = "[DPU_BehaviorTasks]";
     private BehaviorTasks() {} // no instances
@@ -53,8 +54,8 @@ public final class BehaviorTasks {
 
     /** Stops whatever task the robot is currently doing. */
     public static synchronized void stopCurrentTask() {
-        Log.d(TAG, String.format("%s Stopping BI (Current state: nullTask=%s, isRunning=%s, biMode=%s)", TAG, (currentTask == null), isRunning, currentMode.sdkName));
         if (currentTask != null) {
+            Log.d(TAG, String.format("%s Stopping BI (Current state: isRunning=%s, biMode=%s)", TAG, isRunning, currentMode));
             try                 { currentTask.stop(); }
             catch (Exception e) { Log.e(TAG, String.format("%s Error stopping task: %s", TAG, e.getMessage())); }
             currentTask = null;
@@ -96,14 +97,16 @@ public final class BehaviorTasks {
             @Override public void onSuccess           (String s) { logSuccess(mode, s); ThreadUtils.runOnUiThread(onSuccessCb); }
             @Override public void onCancel            (        ) { logCancel (mode   ); }
             @Override public void onError             (String s) { logError  (mode, s); }
-            @Override public void onIntermediateResult(String s) { logInter  (mode, s); }
+
+            // This just spams the logs. Don't think we really need it for anything right now.
+            // @Override public void onIntermediateResult(String s) { logInter  (mode, s); }
         };
     }
 
     // Helpers
     private static void logStarted(Behavior mode          ) { Log.d(TAG, String.format("%s %s | onStarted()",                  TAG, mode.sdkName   )); isRunning = true;  }
-    private static void logSuccess(Behavior mode, String s) { Log.i(TAG, String.format("%s %s | onSuccess() -> %s",            TAG, mode.sdkName, s)); isRunning = false; }
-    private static void logCancel (Behavior mode          ) { Log.i(TAG, String.format("%s %s | onCancel()",                   TAG, mode.sdkName   )); isRunning = false; }
+    private static void logSuccess(Behavior mode, String s) { Log.d(TAG, String.format("%s %s | onSuccess() -> %s",            TAG, mode.sdkName, s)); isRunning = false; }
+    private static void logCancel (Behavior mode          ) { Log.w(TAG, String.format("%s %s | onCancel()",                   TAG, mode.sdkName   )); isRunning = false; }
     private static void logError  (Behavior mode, String s) { Log.e(TAG, String.format("%s %s | onError() -> %s",              TAG, mode.sdkName, s)); isRunning = false; }
     private static void logInter  (Behavior mode, String s) { Log.d(TAG, String.format("%s %s | onIntermediateResult() -> %s", TAG, mode.sdkName, s)); }
 

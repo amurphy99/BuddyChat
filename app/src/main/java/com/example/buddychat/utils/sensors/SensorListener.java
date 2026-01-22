@@ -38,8 +38,8 @@ public final class SensorListener {
     /** Enable sensor module (call after SDK launch). */
     public static void setupSensors() {
         BuddySDK.USB.enableSensorModule(true, new IUsbCommadRsp.Stub() {
-            @Override public void onSuccess(String s) { Log.i(TAG, "-------------- Enabled Sensors --------------");  }
-            @Override public void onFailed (String s) { Log.w(TAG, "Failed to Enable sensors:" + s); }
+            @Override public void onSuccess(String s) { Log.d(TAG, String.format("%s Enabled Sensors ",             TAG   )); }
+            @Override public void onFailed (String s) { Log.e(TAG, String.format("%s Failed to Enable sensors: %s", TAG, s)); }
         });
     }
 

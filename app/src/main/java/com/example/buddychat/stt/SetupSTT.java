@@ -37,7 +37,7 @@ public final class SetupSTT {
     }
 
     private static void requestMicPermission(Context context) {
-        Log.i(TAG, String.format("%s Requesting microphone permission...", TAG));
+        Log.d(TAG, String.format("%s Requesting microphone permission...", TAG));
         if (!(context instanceof Activity)) return;  // caller must be an Activity
         ActivityCompat.requestPermissions((Activity) context, MIC_PERMS, REQ_PERM);
     }
