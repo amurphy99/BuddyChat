@@ -60,12 +60,13 @@ public final class IntentDetector {
     private static final Pattern NEGATE = Pattern.compile("^\\s*" + NEGATE_SRC + "\\b[\\p{Punct}\\s]*", Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
 
     // Check an utterances intent (order matters, reassurance beats negation)
+    // ToDo: Need to make it so it always picks the first one if there are multiple matches
     public static Intent classify(String s) {
         if (s == null) return Intent.UNKNOWN;
-        if (REASSURE.matcher(s).find()) return Intent.REASSURE;
         if (APOLOGY .matcher(s).find()) return Intent.APOLOGY;
-        if (AFFIRM  .matcher(s).find()) return Intent.AFFIRM;
         if (NEGATE  .matcher(s).find()) return Intent.NEGATE;
+        if (REASSURE.matcher(s).find()) return Intent.REASSURE;
+        if (AFFIRM  .matcher(s).find()) return Intent.AFFIRM;
         return Intent.UNKNOWN;
     }
 
@@ -100,10 +101,10 @@ public final class IntentDetector {
 
     // Mode #1: Tell Buddy to shake their head 'no' or nod their head 'yes'
     private static void intentMode1(Intent intent) {
-        if      (intent == Intent.AFFIRM  ) { Emotions.setMood("HAPPY", 3_000L); HeadMotors.nodYes();  }
-        else if (intent == Intent.NEGATE  ) { Emotions.setMood("ANGRY", 3_000L); HeadMotors.shakeNo(); }
-        else if (intent == Intent.REASSURE) { Emotions.setMood("HAPPY", 3_000L); }
-        else if (intent == Intent.APOLOGY ) { Emotions.setMood("SAD",   3_000L); HeadMotors.shakeNo(); }
+        if      (intent == Intent.AFFIRM  ) { Emotions.setMood("HAPPY", 5_000L); HeadMotors.nodYes (); }
+        else if (intent == Intent.NEGATE  ) { Emotions.setMood("ANGRY", 5_000L); HeadMotors.shakeNo(); }
+        else if (intent == Intent.REASSURE) { Emotions.setMood("HAPPY", 5_000L); HeadMotors.nodYes (); }
+        else if (intent == Intent.APOLOGY ) { Emotions.setMood("SAD",   5_000L); HeadMotors.shakeNo(); }
         else { Emotions.setMood(FacialExpression.NEUTRAL); }
     }
 
