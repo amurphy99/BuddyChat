@@ -29,7 +29,7 @@ public final class STTCallbacks  {
 
     public void onText(String utterance, float confidence, String rule) {
         Log.i(TAG, String.format("%s Utt: %s (conf: %.3f, rule: %s)", TAG, utterance, confidence, rule));
-        BuddySTT.pause(); // ToDo: Testing out pausing/resuming STT to avoid double messages
+        //BuddySTT.pause(); // ToDo: Testing out pausing/resuming STT to avoid double messages
 
         // 1. Operations that need to happen on detection of a user utterance
         final boolean chatEnded = onUserUtterance(utterance);

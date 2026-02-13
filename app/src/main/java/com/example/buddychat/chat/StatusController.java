@@ -122,7 +122,8 @@ public final class StatusController {
             Emotions.setMood(FacialExpression.SURPRISED, 3_000L);
 
             // Say Hello & start STT -- ToDo: Should I use "speak happy" here?
-            BuddyTTS.speak("Hello! How are you doing today?", LabialExpression.SPEAK_HAPPY, BuddySTT::start);
+            //BuddyTTS.speak("Hello! How are you doing today?", LabialExpression.SPEAK_HAPPY, BuddySTT::start);
+            BuddyTTS.speak("Hello! How are you doing today?", LabialExpression.SPEAK_HAPPY, ()->{});
         });
     }
 

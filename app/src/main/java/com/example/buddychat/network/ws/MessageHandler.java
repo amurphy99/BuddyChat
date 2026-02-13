@@ -48,7 +48,8 @@ public final class MessageHandler {
         if (body.equals("(empty)")) { return; }
 
         // Speak the response ToDo: Just changed this to go before IntentDetector
-        BuddyTTS.speak(body, BuddySTT::start); // ToDo: Also set this to restart the STT service on completion
+        //BuddyTTS.speak(body, BuddySTT::start); // ToDo: Also set this to restart the STT service on completion
+        BuddyTTS.speak(body);
 
         // Check the LLMs utterance for action cues (e.g. nod yes for "of course", "sure", etc...)
         IntentDetector.IntentDetection(body);

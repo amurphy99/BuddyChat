@@ -168,11 +168,11 @@ public class MainActivity extends BuddyActivity {
             if (isActive) {
                 // If Active -> Button should allow stopping
                 buttonStartEnd.setText(R.string.end_chat);
-                buttonStartEnd.setBackgroundColor(getColor(R.color.purple_700));
+                //buttonStartEnd.setBackgroundColor(getColor(R.color.purple_700));
             } else {
                 // If Inactive -> Button should allow starting
                 buttonStartEnd.setText(R.string.start_chat);
-                buttonStartEnd.setBackgroundColor(getColor(R.color.teal_200));
+                //buttonStartEnd.setBackgroundColor(getColor(R.color.teal_200));
             }
         });
     }
