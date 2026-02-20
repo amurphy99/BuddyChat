@@ -33,8 +33,8 @@ public final class ProfileManager {
     // --------------------------------------------------------------------------------
     /// Flash a Toast message once successfully retrieving the profile
     private static void onProfileSuccess(Profile p) {
-        Log.i(TAG, String.format("%s Profile fetch success! Welcome, %s %s | %s", TAG, p.plwd.first_name, p.plwd.last_name, p.plwd.username));
-        UiUtils.showToast(String.format("Welcome %s", p.plwd.username));
+        Log.i(TAG, String.format("%s Profile fetch success! Welcome, %s %s | %s", TAG, p.firstName(), p.lastName(), p.username()));
+        UiUtils.showToast(String.format("Welcome %s", p.username()));
     }
 
     private static void onProfileError  (Throwable t) {

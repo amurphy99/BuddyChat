@@ -23,7 +23,7 @@ public final class BackendURLs {
 
         // For cloud server connection
         else {
-            String host = "cognibot.org"; // sandbox.cognibot.org | cognibot.org
+            String host = "sandbox2.cognibot.org"; // sandbox.cognibot.org | cognibot.org
             return new HttpUrl.Builder().scheme("https").host(host).addPathSegments("ws/chat/")
                     .addQueryParameter("token",  accessToken)
                     .addQueryParameter("source", "buddyrobot")

@@ -30,8 +30,8 @@ public class NetworkUtils {
     private static final String BASE =
             "1".equals(BuildConfig.TEST_LOCAL)
                     ? "http://10.0.2.2:8000/api"             // local docker container
-                    : "https://cognibot.org/api";            // cloud server
-                    //: "https://sandbox.cognibot.org/api";  // cloud server
+                    //: "https://cognibot.org/api";            // cloud server
+                    : "https://sandbox2.cognibot.org/api";  // cloud server
 
 
     // -----------------------------------------------------------------------

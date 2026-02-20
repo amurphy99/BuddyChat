@@ -65,8 +65,18 @@ public final class MessageHandler {
 
     /** Handle "expression" data */
     private static void onExpression(JSONObject obj) {
-        final String rawExpression = obj.optString("expression", "NEUTRAL");
-        Emotions.setMood(rawExpression, 1_000L);
+        // Nested payload (we expect the "data" field to have the actual message)
+        final JSONObject data = obj.optJSONObject("data");
+        if (data == null) { return; } // No data in the object TODO: Maybe log something
+
+        Log.i(TAG, String.format("%s onExpression JSON: %s", TAG, obj));
+
+        // Get fields from the message
+        final String rawExpression = data.optString("expression", "NEUTRAL");
+        final long  durationMs     = data.optLong  ("duration_ms", 1_000L);
+
+        // Execute the command
+        Emotions.setMood(rawExpression, durationMs);
     }
 
 }
