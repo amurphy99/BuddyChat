@@ -19,8 +19,8 @@ public final class BehaviorTasks {
     private BehaviorTasks() {} // no instances
 
     // Running State
-    private static Task     currentTask = null;
-    private static Behavior currentMode = null;
+    private static Task   currentTask = null;
+    private static String currentMode = null;
 
     // ToDo: Not sure if this is required anymore, depends on if `Task` gets automatically set to null after completion
     public static volatile boolean isRunning = false;
@@ -52,6 +52,15 @@ public final class BehaviorTasks {
         startBehavior(Behavior.SLEEP, null);
     }
 
+    /** Play a Buddy BI category named by a backend robot_action animation. */
+    public static void startAnimation(String animationName) {
+        if (animationName == null || animationName.trim().isEmpty()) {
+            Log.w(TAG, "Ignoring an empty animation name.");
+            return;
+        }
+        startBehavior(animationName.trim(), null);
+    }
+
     /** Stops whatever task the robot is currently doing. */
     public static synchronized void stopCurrentTask() {
         if (currentTask != null) {
@@ -67,16 +76,20 @@ public final class BehaviorTasks {
     // Internal Logic
     // --------------------------------------------------------------------------------
     private static synchronized void startBehavior(Behavior mode, @Nullable Runnable onSuccess) {
+        startBehavior(mode.sdkName, onSuccess);
+    }
+
+    private static synchronized void startBehavior(String mode, @Nullable Runnable onSuccess) {
         // Always stop the previous behavior before trying to start a new one
         stopCurrentTask();
 
         // Set the current mode
-        Log.i(TAG, String.format("%s Starting Behavior: %s", TAG, mode.sdkName));
+        Log.i(TAG, String.format("%s Starting Behavior: %s", TAG, mode));
         currentMode = mode;
 
         // Create the task & start it
         try {
-            currentTask = BuddySDK.Companion.createBICategoryTask(mode.sdkName, null, null, true);
+            currentTask = BuddySDK.Companion.createBICategoryTask(mode, null, null, true);
             currentTask.start(newTaskCallback(onSuccess, mode));
         }
         // Even if start fails, try to run the callback so the app flow continues
@@ -91,7 +104,7 @@ public final class BehaviorTasks {
     // ================================================================================
     // ToDo: onCancel might be what happens when you call .stop()... so set the task to null there?
     // ToDo: isSleeping needs to change differently depending on which Task this is a Callback for...
-    private static TaskCallback newTaskCallback(@Nullable Runnable onSuccessCb, Behavior mode) {
+    private static TaskCallback newTaskCallback(@Nullable Runnable onSuccessCb, String mode) {
         return new TaskCallback() {
             @Override public void onStarted           (        ) { logStarted(mode   ); }
             @Override public void onSuccess           (String s) { logSuccess(mode, s); ThreadUtils.runOnUiThread(onSuccessCb); }
@@ -104,10 +117,10 @@ public final class BehaviorTasks {
     }
 
     // Helpers
-    private static void logStarted(Behavior mode          ) { Log.d(TAG, String.format("%s %s | onStarted()",                  TAG, mode.sdkName   )); isRunning = true;  }
-    private static void logSuccess(Behavior mode, String s) { Log.d(TAG, String.format("%s %s | onSuccess() -> %s",            TAG, mode.sdkName, s)); isRunning = false; }
-    private static void logCancel (Behavior mode          ) { Log.w(TAG, String.format("%s %s | onCancel()",                   TAG, mode.sdkName   )); isRunning = false; }
-    private static void logError  (Behavior mode, String s) { Log.e(TAG, String.format("%s %s | onError() -> %s",              TAG, mode.sdkName, s)); isRunning = false; }
-    private static void logInter  (Behavior mode, String s) { Log.d(TAG, String.format("%s %s | onIntermediateResult() -> %s", TAG, mode.sdkName, s)); }
+    private static void logStarted(String mode          ) { Log.d(TAG, String.format("%s %s | onStarted()",                  TAG, mode   )); isRunning = true;  }
+    private static void logSuccess(String mode, String s) { Log.d(TAG, String.format("%s %s | onSuccess() -> %s",            TAG, mode, s)); isRunning = false; }
+    private static void logCancel (String mode          ) { Log.w(TAG, String.format("%s %s | onCancel()",                   TAG, mode   )); isRunning = false; }
+    private static void logError  (String mode, String s) { Log.e(TAG, String.format("%s %s | onError() -> %s",              TAG, mode, s)); isRunning = false; }
+    private static void logInter  (String mode, String s) { Log.d(TAG, String.format("%s %s | onIntermediateResult() -> %s", TAG, mode, s)); }
 
 }

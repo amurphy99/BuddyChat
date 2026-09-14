@@ -14,7 +14,7 @@ public final class BackendURLs {
     // URL of the WebSocket server
     public static HttpUrl getWebSocketURL(String accessToken) {
         // For local Docker container
-        if (BuildConfig.TEST_LOCAL == "1") {
+        if ("1".equals(BuildConfig.TEST_LOCAL)) {
             return new HttpUrl.Builder().scheme("http").host("10.0.2.2").port(8000).addPathSegments("ws/chat/")
                     .addQueryParameter("token",  accessToken)
                     .addQueryParameter("source", "buddyrobot")

@@ -21,6 +21,7 @@ import com.example.buddychat.chat.StatusController;
 /// Refers to a separate ChatListener utility for handling messages
 public final class ChatSocketManager {
     private static final String TAG  = "[DPU_ChatSocketManager]";
+    private static final int MAX_TRANSCRIPTION_LENGTH = 20_000;
     private ChatSocketManager() {} // no instances
 
     // The single active connection
@@ -84,19 +85,24 @@ public final class ChatSocketManager {
     // ================================================================================
     /** Send JSON to the WebSocket safely */
     public static void sendJson(String json) {
-        if (SOCKET != null) { SOCKET.send(json); }
-        else { Log.w(TAG, "Attempted to send message, but Socket is null."); }
+        if ( SOCKET == null   ) { Log.w(TAG, "Attempted to send message, but Socket is null."); return; }
+        if (!SOCKET.send(json)) { Log.w(TAG, "WebSocket rejected an outbound message."); }
     }
 
-    /** Send a string (automatically escapes quotes/special chars) */
+    /** Send one finalized local-ASR result using the primary client protocol. */
     public static void sendString(String text) {
-        // Use JSONObject to safely format the string
+        if (text == null || text.trim().isEmpty()   ) { Log.w(TAG, "Not sending an empty transcription.");                        return; }
+        if (text.length() > MAX_TRANSCRIPTION_LENGTH) { Log.w(TAG, "Not sending a transcription longer than 20,000 characters."); return; }
+
+        // Use JSONObject to format the string for transmission
         try {
             JSONObject json = new JSONObject();
             json.put("type", "transcription");
             json.put("data", text);
+            json.put("time", System.currentTimeMillis() / 1000.0);
             sendJson(json.toString());
-        } catch (Exception e) { Log.e(TAG, "Failed to format JSON", e); }
+        } 
+        catch (Exception e) { Log.e(TAG, "Failed to format transcription JSON", e); }
     }
 
     /** End the chat and clean up variables (sends a logic message first). */
@@ -105,7 +111,6 @@ public final class ChatSocketManager {
             try {
                 JSONObject json = new JSONObject();
                 json.put("type", "end_chat");
-                json.put("data", System.currentTimeMillis());
                 SOCKET.send(json.toString());
 
             } catch (Exception ignored) { }
