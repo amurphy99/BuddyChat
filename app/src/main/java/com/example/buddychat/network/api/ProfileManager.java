@@ -2,9 +2,11 @@ package com.example.buddychat.network.api;
 
 import android.util.Log;
 
+// From this project
 import com.example.buddychat.network.NetworkUtils;
 import com.example.buddychat.network.model.Profile;
 import com.example.buddychat.utils.UiUtils;
+
 
 // ================================================================================
 // Fetch profile information from the backend API
@@ -23,7 +25,7 @@ public final class ProfileManager {
 
         // Use the NetworkUtils code
         NetworkUtils.fetchProfile(authToken, new NetworkUtils.ProfileCallback() {
-            @Override public void onSuccess(Profile p  ) { onProfileSuccess(p); }
+            @Override public void onSuccess(Profile   p) { onProfileSuccess(p); }
             @Override public void onError  (Throwable t) { onProfileError  (t); }
         });
     }
@@ -38,7 +40,7 @@ public final class ProfileManager {
     }
 
     private static void onProfileError  (Throwable t) {
-        Log.e(TAG, String.format("%s Profile fetch failed: %s", TAG, t.getMessage()));
+        Log.e(TAG,        String.format("%s Profile fetch failed: %s", TAG, t.getMessage()));
         UiUtils.showToast(String.format("%s Profile fetch failed: %s", TAG, t.getMessage()));
     }
 
