@@ -18,3 +18,9 @@ local.properties
 .kotlin
 .idea
 gradle.properties
+
+# Documents
+notes/User_guide_2.4.pdf
+docs/*
+CLAUDE.local.md
+
