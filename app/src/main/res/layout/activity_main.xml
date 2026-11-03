@@ -233,4 +233,41 @@
         app:layout_constraintBottom_toBottomOf = "parent"
         />
 
+    <!-- ================================================================================ -->
+    <!-- Backend ASR and Video Buttons                                                    -->
+    <!-- ================================================================================ -->
+    <!-- Video Button: camera, sensor, and head stream (bottom left) -->
+    <Button android:id="@+id/buttonVideo"
+        android:layout_width  = "wrap_content"
+        android:layout_height = "wrap_content"
+        android:layout_margin = "12dp"
+
+        android:textAppearance = "@style/TextProfileBar"
+        android:background     = "@drawable/tv_user_info_bg"
+
+        android:textSize          = "14sp"
+        android:paddingHorizontal = "16dp"
+        android:alpha             = "0.5"
+
+        app:layout_constraintStart_toStartOf   = "parent"
+        app:layout_constraintBottom_toBottomOf = "parent"
+        />
+
+    <!-- Backend ASR Button: microphone stream for backend STT (bottom right) -->
+    <Button android:id="@+id/buttonBackendAsr"
+        android:layout_width  = "wrap_content"
+        android:layout_height = "wrap_content"
+        android:layout_margin = "12dp"
+
+        android:textAppearance = "@style/TextProfileBar"
+        android:background     = "@drawable/tv_user_info_bg"
+
+        android:textSize          = "14sp"
+        android:paddingHorizontal = "16dp"
+        android:alpha             = "0.5"
+
+        app:layout_constraintEnd_toEndOf       = "parent"
+        app:layout_constraintBottom_toBottomOf = "parent"
+        />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

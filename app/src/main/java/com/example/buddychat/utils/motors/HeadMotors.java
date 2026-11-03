@@ -4,6 +4,9 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.util.Log;
 
+import androidx.annotation.Nullable;
+
+// Buddy SDK
 import com.bfr.buddy.usb.shared.IUsbCommadRsp;
 import com.bfr.buddysdk.BuddySDK;
 
@@ -14,8 +17,9 @@ import com.bfr.buddysdk.BuddySDK;
 //  NO motor => angles: ()
 public final class HeadMotors {
     private static final String TAG = "[DPU_HeadMotors]";
-    private static final String RES = "RESET";
-    private static final String SEQ = "SEQUENCE";
+    private static final String RES  = "RESET";
+    private static final String SEQ  = "SEQUENCE";
+    private static final String LOOK = "LOOK";
 
     // -----------------------------------------------------------------------
     // Motion Parameters (angles are in degrees, speed in degrees/sec)
@@ -32,6 +36,10 @@ public final class HeadMotors {
     // NO angles (yaw)
     private static final float NO_LEFT     =  -10f;
     private static final float NO_RIGHT    =  +10f;
+
+    // Look-command angles (guide limits: pitch -35 to 45, yaw -90 to 90; BuddySDK guide 2.4, pp. 33-34)
+    private static final float LOOK_PITCH_DEG = 15f;  // Up is positive
+    private static final float LOOK_YAW_DEG   = 30f;  // Right is positive
 
     // -----------------------------------------------------------------------
     // Motor Thread (serialize all commands)
@@ -125,6 +133,52 @@ public final class HeadMotors {
     public static void resetYes() { resetToHome(Motor.YES, YES_OPS); }
     public static void resetNo () { resetToHome(Motor.NO,   NO_OPS); }
 
+
+    // --------------------------------------------------------------------------------
+    // Look Commands
+    // --------------------------------------------------------------------------------
+    // Directions the backend can request over the media socket
+    public enum Look { UP, DOWN, LEFT, RIGHT, CENTER }
+
+    // Turn the head one way, or straighten it (pitch, then yaw); false if a move is running
+    public static boolean look(Look direction) {
+        switch (direction) {
+            case UP     : return lookAt(YES_OPS,  LOOK_PITCH_DEG, null);
+            case DOWN   : return lookAt(YES_OPS, -LOOK_PITCH_DEG, null);
+            case LEFT   : return lookAt( NO_OPS, -LOOK_YAW_DEG,   null);
+            case RIGHT  : return lookAt( NO_OPS,  LOOK_YAW_DEG,   null);
+            case CENTER : return lookAt(YES_OPS,  HOME,           () -> lookAt(NO_OPS, HOME, null));
+            default     : throw new IllegalStateException("Unhandled look direction: " + direction);
+        }
+    }
+
+    // Enable one motor and move it to an angle (onDone runs when that move ends)
+    private static boolean lookAt(Ops ops, float angle, @Nullable Runnable onDone) {
+        // 1) One head move at a time
+        if (running || emergencyStopped) {
+            Log.w(TAG, String.format("%s %s LOOK ignored (running=%s, eStop=%s)", TAG, ops.label, running, emergencyStopped));
+            return false;
+        }
+
+        // 2) Nothing to move when the motor is already there
+        if (Math.abs(ops.position.call() - angle) < 1f) {
+            if (onDone != null) onDone.run();
+            return true;
+        }
+
+        // 3) Enable the motor, then move it
+        running = true;
+        motor.post(() -> ops.enable.call(true, new IUsbCommadRsp.Stub() {
+            @Override public void onSuccess(String s) { issueMove   (ops, LOOK, angle, 0, onDone); }
+            @Override public void onFailed (String s) { enableFailed(ops, LOOK, s); running = false; }
+        }));
+        return true;
+    }
+
+    // Current head angles in degrees, for the media state report
+    public static float pitchDeg() { return YES_OPS.position.call(); }
+    public static float yawDeg  () { return  NO_OPS.position.call(); }
+
     // =======================================================================
     // Core Reset (shared)
     // =======================================================================
@@ -136,43 +190,50 @@ public final class HeadMotors {
         running = true;
         motor.post(() -> { final String before = ops.status.call();
             ops.enable.call(true, new IUsbCommadRsp.Stub() {
-                @Override public void onSuccess(String s) { enableSuccess(ops, RES, before); issueMove(ops, HOME, 0, true); }
+                @Override public void onSuccess(String s) { enableSuccess(ops, RES, before); issueMove(ops, RES, HOME, 0, null); }
                 @Override public void onFailed (String s) { enableFailed (ops, RES, s     ); running = false; }
             });
         });
     }
 
-    // -----------------------------------------------------------------------
-    // Issue a single move command
-    // -----------------------------------------------------------------------
-    /** Single move used by reset; disables motor after success/fail.
-     * <br>
-     * "OK" when launched, "NOK" when failed, "YES_MOVE_FINISHED" when done.
-     * <br>
-     * ToDo: Probably can be repurposed for general one-shot movements if needed...
-     * */
-    private static void issueMove(Ops ops, float angle, int retries, boolean disableAfter) {
+    // --------------------------------------------------------------------------------
+    // Single Move
+    // --------------------------------------------------------------------------------
+    // Move one enabled motor to an angle, retrying a failed attempt, then disable the motor
+    private static void issueMove(
+        Ops                ops,         // Motor being moved (YES or NO)
+        String             forCommand,  // RESET or LOOK, for logs
+        float              angle,       // Target angle in degrees
+        int                retries,     // Failed attempts so far for this move
+        @Nullable Runnable onDone       // Runs after the move ends and the motor is disabled
+    ) {
+        /*
+        The SDK answers "OK" when the move starts, "NOK" when it is refused, and
+        "YES_MOVE_FINISHED" / "NO_MOVE_FINISHED" when it arrives. The speed's sign picks
+        the direction: positive looks up (YES) or right (NO) (BuddySDK guide 2.4, pp. 33-34).
+        */
         if (emergencyStopped) { running = false; return; }
+        final float speed = (angle >= ops.position.call()) ? SPEED : -SPEED;
 
-        // Calls the respective move command (e.g. "buddySayYes" or "buddySayNo")
-        ops.command.call(SPEED, angle, new IUsbCommadRsp.Stub() {
-
-            // Check the status code (refer to above documentation) & disable the motors when finished
-            @Override public void onSuccess(String success) {
-                if (success.equals(ops.moveFinished)) {
-                    moveSuccess(ops, RES, angle, success); running = false;
-                    if (disableAfter) ops.enable.call(false, new LogCb(ops.label + " DISABLE after RESET success"));
-                }
+        // Disable the motor when the move finishes; retry a refused move
+        ops.command.call(speed, angle, new IUsbCommadRsp.Stub() {
+            @Override public void onSuccess(String result) {
+                if      (result.equals(ops.moveFinished)) { moveSuccess(ops, forCommand, angle, result); endMove(ops, forCommand, onDone); }
+                else if (result.equals("NOK"))            { onFailed(result); }
             }
-
-            // Retry or disable if at the retry limit
             @Override public void onFailed(String err) {
-                moveFailed(ops, RES, angle, retries, err);
-                if (retries < MAX_RETRIES && !emergencyStopped) { motor.postDelayed(() -> issueMove(ops, angle, retries + 1, disableAfter), SETTLE_MS); }
-                else { running = false; if (disableAfter) ops.enable.call(false, new LogCb(ops.label + " DISABLE after RESET failure")); }
+                moveFailed(ops, forCommand, angle, retries, err);
+                if ((retries < MAX_RETRIES) && !emergencyStopped) { motor.postDelayed(() -> issueMove(ops, forCommand, angle, retries + 1, onDone), SETTLE_MS); }
+                else                                              { endMove(ops, forCommand, onDone); }
             }
-
         });
+    }
+
+    // Free the head for the next move, disable this motor, and continue with onDone
+    private static void endMove(Ops ops, String forCommand, @Nullable Runnable onDone) {
+        running = false;
+        ops.enable.call(false, new LogCb(ops.label + " DISABLE after " + forCommand));
+        if (onDone != null) onDone.run();
     }
 
     // =======================================================================

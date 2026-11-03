@@ -28,6 +28,8 @@ public final class STTCallbacks  {
     public void onError(String e) { Log.e(TAG, String.format("%s error: %s", TAG, e)); }
 
     public void onText(String utterance, float confidence, String rule) {
+        // While Backend ASR is on, the backend hears the user (a transcription would be a second turn)
+        if (BackendSTT.state() != BackendSTT.State.OFF) { Log.d(TAG, String.format("%s Ignored speech (Backend ASR is on)", TAG)); return; }
         Log.i(TAG, String.format("%s Utt: %s (conf: %.3f, rule: %s)", TAG, utterance, confidence, rule));
         //BuddySTT.pause(); // ToDo: Testing out pausing/resuming STT to avoid double messages
 

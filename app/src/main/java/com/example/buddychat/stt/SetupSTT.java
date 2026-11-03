@@ -9,10 +9,14 @@ import android.util.Log;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
-import com.bfr.buddysdk.services.speech.STTTask;
-import com.bfr.buddysdk.BuddySDK;
-
 import java.util.Locale;
+
+// Buddy SDK
+import com.bfr.buddysdk.BuddySDK;
+import com.bfr.buddysdk.services.speech.STTTask;
+
+// From this project
+import com.example.buddychat.utils.UiUtils;
 
 // ================================================================================
 // Setup for Built-in Speech-to-Text
@@ -30,20 +34,18 @@ public final class SetupSTT {
     private static final String[] MIC_PERMS = { Manifest.permission.RECORD_AUDIO };
 
     // --------------------------------------------------------------------------------
-    // Permission Helpers -- used once during initialization
+    // Microphone Permission (only Backend ASR records the microphone itself)
     // --------------------------------------------------------------------------------
-    private static boolean notMicPermission(Context context) {
-        return ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED;
+    // Report whether this app may record the microphone
+    public static boolean hasMicPermission(Context context) {
+        return ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED;
     }
 
-    private static void requestMicPermission(Context context) {
+    // Show Android's microphone dialog (asked on the first Backend ASR press, not at startup)
+    public static void requestMicPermission(Activity activity) {
         Log.d(TAG, String.format("%s Requesting microphone permission...", TAG));
-        if (!(context instanceof Activity)) return;  // caller must be an Activity
-        ActivityCompat.requestPermissions((Activity) context, MIC_PERMS, REQ_PERM);
-    }
-
-    public static void checkMicPermission(Context context) {
-        if (SetupSTT.notMicPermission(context)) { SetupSTT.requestMicPermission(context); }
+        ActivityCompat.requestPermissions(activity, MIC_PERMS, REQ_PERM);
+        UiUtils.showToast("Allow the microphone, then press Backend ASR again");
     }
 
     // ================================================================================
@@ -63,9 +65,6 @@ public final class SetupSTT {
     // --------------------------------------------------------------------------------
     // ToDo: Add retry logic to use Cerence if Google fails
     public static STTTask initializeSTTTask(Context context) {
-        // Check microphone permission
-        if (SetupSTT.notMicPermission(context)) { SetupSTT.requestMicPermission(context); }
-
         // Initialize empty task object
         STTTask task = null;
 

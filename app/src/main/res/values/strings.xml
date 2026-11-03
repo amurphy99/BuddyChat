@@ -16,4 +16,8 @@
     <string name="buddy_messages"> [Buddy Message]  </string>
     <string name="user_messages" > [User Message]   </string>
 
+    <!-- Backend ASR and Video buttons (%1$s is the state: off, starting, on, stopping) -->
+    <string name="backend_asr_button">Backend ASR: %1$s</string>
+    <string name="video_button"      >Video: %1$s</string>
+
 </resources>

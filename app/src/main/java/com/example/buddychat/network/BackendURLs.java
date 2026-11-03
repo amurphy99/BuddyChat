@@ -56,8 +56,15 @@ public final class BackendURLs {
             .build();
     }
 
-    // Video and navigation socket
-    // TODO...
+    // Media socket (video, telemetry, head commands), tied to one open chat connection
+    public static HttpUrl getMediaWebSocketURL(String accessToken, String chatConnectionId) {
+        return baseURL()
+            .addPathSegments("ws/buddy-media/")
+            .addQueryParameter("token",                 accessToken     )
+            .addQueryParameter("source",                "buddyrobot"    )
+            .addQueryParameter("primary_connection_id", chatConnectionId)
+            .build();
+    }
 
 
     // --------------------------------------------------------------------------------

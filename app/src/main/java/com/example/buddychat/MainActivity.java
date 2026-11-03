@@ -2,31 +2,32 @@ package com.example.buddychat;
 
 import android.os.Bundle;
 import android.util.Log;
-import android.widget.TextView;
 import android.widget.Button;
+import android.widget.TextView;
+
+import java.util.Locale;
 
 // Buddy SDK
-import com.bfr.buddysdk.BuddySDK;
-import com.bfr.buddysdk.BuddyActivity;
 import com.bfr.buddy.ui.shared.FacialExpression;
+import com.bfr.buddysdk.BuddyActivity;
+import com.bfr.buddysdk.BuddySDK;
 
-// Speech System
+// From this project
 import com.example.buddychat.chat.StatusController;
 import com.example.buddychat.network.NetworkUtils;
-import com.example.buddychat.network.ws.ChatSocketManager;
-import com.example.buddychat.network.api.TokenManager;
 import com.example.buddychat.network.api.ProfileManager;
-
-// Buddy Features
+import com.example.buddychat.network.api.TokenManager;
+import com.example.buddychat.network.media.MediaSocketManager;
+import com.example.buddychat.network.ws.ChatSocketManager;
+import com.example.buddychat.stt.BackendSTT;
+import com.example.buddychat.stt.BuddySTT;
+import com.example.buddychat.stt.STTCallbacks;
+import com.example.buddychat.stt.SetupSTT;
 import com.example.buddychat.tts.SetupTTS;
+import com.example.buddychat.utils.behavior.BehaviorTasks;
+import com.example.buddychat.utils.behavior.Emotions;
 import com.example.buddychat.utils.motors.HeadMotors;
 import com.example.buddychat.utils.sensors.SensorListener;
-import com.example.buddychat.utils.behavior.Emotions;
-import com.example.buddychat.utils.behavior.BehaviorTasks;
-
-// BuddySDK.Speech wrappers
-import com.example.buddychat.stt.STTCallbacks;
-import com.example.buddychat.stt.BuddySTT;
 
 
 // ================================================================================
@@ -40,8 +41,10 @@ public class MainActivity extends BuddyActivity {
     private static final String TAG = "[DPU_Main]";
 
     // UI References
-    private TextView textUserInfo;   // Username (currently hidden)
-    private Button   buttonStartEnd; // Start or end the chat/backend websocket connection
+    private TextView textUserInfo;     // Username (currently hidden)
+    private Button   buttonStartEnd;   // Start or end the chat/backend websocket connection
+    private Button   buttonBackendAsr; // Switch between Buddy's STT and backend STT (bottom right)
+    private Button   buttonVideo;      // Start or stop the camera and sensor stream (bottom left)
 
     // WebSocket related ToDo: IDK if this was needed anymore...
     private STTCallbacks sttCallbacks;
@@ -77,6 +80,10 @@ public class MainActivity extends BuddyActivity {
             }
         });
 
+        // Show the Backend ASR and Video states on their buttons
+        BackendSTT        .setListener(this::updateMediaButtons);
+        MediaSocketManager.setListener(this::updateMediaButtons);
+        updateMediaButtons();
     }
 
     // --------------------------------------------------------------------------------
@@ -115,8 +122,10 @@ public class MainActivity extends BuddyActivity {
         // Stop background timers
         TokenManager.stopTokenRefresher();
 
-        // Unregister the UI listener so we don't try to update a dead screen
-        StatusController.setListener(null);
+        // Unregister the UI listeners so we don't try to update a dead screen
+        StatusController  .setListener(null);
+        BackendSTT        .setListener(null);
+        MediaSocketManager.setListener(null);
 
         // Make sure Buddy stops talking/listening
         StatusController.stop(); // Safe to call even if already stopped
@@ -148,8 +157,10 @@ public class MainActivity extends BuddyActivity {
     // --------------------------------------------------------------------------------
     /** Initialize UI element references */
     private void initializeUI() {
-        textUserInfo   = findViewById(R.id.textUserInfo  );
-        buttonStartEnd = findViewById(R.id.buttonStartEnd);
+        textUserInfo     = findViewById(R.id.textUserInfo    );
+        buttonStartEnd   = findViewById(R.id.buttonStartEnd  );
+        buttonBackendAsr = findViewById(R.id.buttonBackendAsr);
+        buttonVideo      = findViewById(R.id.buttonVideo     );
     }
 
     /** Set button listeners */
@@ -158,6 +169,19 @@ public class MainActivity extends BuddyActivity {
         buttonStartEnd.setOnClickListener(v -> {
             Log.w(TAG, String.format("%s StartEnd Button pressed", TAG));
             toggleChat();
+        });
+
+        // Backend ASR: ask for the microphone on the first press, then switch STT on or off
+        buttonBackendAsr.setOnClickListener(v -> {
+            if      (BackendSTT.state() == BackendSTT.State.ON) { BackendSTT.turnOff();                 }
+            else if (SetupSTT.hasMicPermission(this))           { BackendSTT.turnOn ();                 }
+            else                                                { SetupSTT.requestMicPermission(this); }
+        });
+
+        // Video: start the stream when off, otherwise stop it (this also cancels a slow start)
+        buttonVideo.setOnClickListener(v -> {
+            if (MediaSocketManager.state() == MediaSocketManager.State.OFF) { MediaSocketManager.start(); }
+            else                                                            { MediaSocketManager.stop (); }
         });
     }
 
@@ -174,6 +198,14 @@ public class MainActivity extends BuddyActivity {
                 buttonStartEnd.setText(R.string.start_chat);
                 //buttonStartEnd.setBackgroundColor(getColor(R.color.teal_200));
             }
+        });
+    }
+
+    // Show each optional feature's state on its button (states change on other threads)
+    private void updateMediaButtons() {
+        runOnUiThread(() -> {
+            buttonBackendAsr.setText(getString(R.string.backend_asr_button, BackendSTT        .state().name().toLowerCase(Locale.ROOT)));
+            buttonVideo     .setText(getString(R.string.video_button,       MediaSocketManager.state().name().toLowerCase(Locale.ROOT)));
         });
     }
 

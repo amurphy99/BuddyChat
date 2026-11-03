@@ -108,6 +108,11 @@ Not exact -- some systems offload functionality to other helpers.
 * **`BuddyTTS`**: Handles Text-to-Speech. Automatically pauses the microphone while speaking to prevent echo.
 * **`BehaviorTasks`**: Manages physical animations (like "Wake Up" and "Sleep").
 
+### 🎛 Optional Buttons (off by default, usable once a chat is running)
+* **Backend ASR** (bottom right) -> **`BackendSTT`**: Stops Buddy's own STT and streams the microphone to the backend on the chat socket instead. Pressing it again switches back. The first press asks for Android's microphone permission.
+* **Video** (bottom left) -> **`MediaSocketManager`**: Opens a second socket (`/ws/buddy-media/`) and sends camera JPEGs (**`CameraFrames`**) plus the latest reading from every sensor (**`SensorListener`**) about 5 times per second. The backend can turn the head with five look commands (`HeadMotors.look`).
+* The wire format for both is in `notes/buddy-media-protocol.md`. A lost connection or failed switch shows a toast and turns that feature off; the chat keeps running. A failed camera grab or head move is only logged, and Video keeps streaming.
+
 <hr>
 
 

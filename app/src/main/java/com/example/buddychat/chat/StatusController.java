@@ -1,16 +1,19 @@
 package com.example.buddychat.chat;
 
-import java.util.concurrent.atomic.AtomicBoolean;
 import android.util.Log;
+
+import java.util.concurrent.atomic.AtomicBoolean;
 
 // Buddy SDK
 import com.bfr.buddy.ui.shared.FacialExpression;
 import com.bfr.buddy.ui.shared.LabialExpression;
 
-// Buddy Features
+// From this project
+import com.example.buddychat.network.media.MediaSocketManager;
+import com.example.buddychat.network.ws.ChatSocketManager;
+import com.example.buddychat.stt.BackendSTT;
 import com.example.buddychat.stt.BuddySTT;
 import com.example.buddychat.tts.BuddyTTS;
-import com.example.buddychat.network.ws.ChatSocketManager;
 import com.example.buddychat.utils.UiUtils;
 import com.example.buddychat.utils.behavior.BehaviorTasks;
 import com.example.buddychat.utils.behavior.Emotions;
@@ -100,10 +103,14 @@ public final class StatusController {
         boolean wasAwake = isChatActive.get();
         updateState(false); // Mark as offline immediately
 
-        // 2. Kill the Network -- ToDo: Do I need to guard for if the chat wasn't active?
+        // 2. Turn off Backend ASR and Video (nothing happens when they are already off)
+        BackendSTT        .reset();
+        MediaSocketManager.stop ();
+
+        // 3. Kill the Network -- ToDo: Do I need to guard for if the chat wasn't active?
         ChatSocketManager.endChat(); // Sends "end_chat" JSON and closes socket
 
-        // 3. If we were awake, be polite before dying. If we weren't awake (e.g., error during startup), just ensure the sleep pose is held.
+        // 4. If we were awake, be polite before dying. If we weren't awake (e.g., error during startup), just ensure the sleep pose is held.
         if (wasAwake) { UiUtils.showToast("Chat ended, Goodbye!"); playEnding(); }
         else          { Log.d(TAG, String.format("%s Robot was not active, skipping goodbye animation.", TAG)); }
     }

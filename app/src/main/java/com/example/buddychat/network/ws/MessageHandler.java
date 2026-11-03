@@ -2,12 +2,15 @@ package com.example.buddychat.network.ws;
 
 import android.util.Log;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+// From this project
+import com.example.buddychat.network.media.MediaSocketManager;
+import com.example.buddychat.stt.BackendSTT;
 import com.example.buddychat.tts.BuddyTTS;
 import com.example.buddychat.utils.behavior.BehaviorTasks;
 import com.example.buddychat.utils.behavior.Emotions;
-
-import org.json.JSONException;
-import org.json.JSONObject;
 
 // ================================================================================
 // Handle different types of WS messages
@@ -30,6 +33,7 @@ public final class MessageHandler {
                 case "robot_action":     onRobotAction    (obj); break;
                 case "llm_response":     onLLMResponse    (obj); break;
                 case "message":          onTranscript     (obj); break;
+                case "user_utt":         onUserUtt        (obj); break;
                 case "command_ack":      onCommandAck     (obj); break;
                 case "stream_status":    onStreamStatus   (obj); break;
                 case "recording_status": onRecordingStatus(obj); break;
@@ -99,24 +103,24 @@ public final class MessageHandler {
     }
 
     // --------------------------------------------------------------------------------
+    // [onUserUtt] What the backend heard the user say (only while Backend ASR is on)
+    // --------------------------------------------------------------------------------
+    // Log it only (sending it back as a transcription would add a second user turn)
+    private static void onUserUtt(JSONObject obj) throws JSONException {
+        Log.i(TAG, String.format("%s Backend heard: %s", TAG, obj.getString("data")));
+    }
+
+    // --------------------------------------------------------------------------------
     // [onCommandAck] Receives command acknowledgements from the backend
     // --------------------------------------------------------------------------------
-    /** Buddy currently sends no commands, but we still parse and log any command failures safely. */
-    private static void onCommandAck(JSONObject obj) {
-        final JSONObject data = obj.optJSONObject("data");
-        if (data == null) { Log.w(TAG, "Ignoring command_ack without object data."); return; }
-
-        final String id   = data.optString("id", "unknown");
-        final String name = data.isNull("name") ? "unknown" : data.optString("name", "unknown");
-
-        if (data.optBoolean("ok", false)) {
-            Log.d(TAG, String.format("%s Command accepted: %s (id=%s), state=%s",
-                    TAG, name, id, data.optJSONObject("state")));
-        } else {
-            Log.w(TAG, String.format("%s Command rejected: %s (id=%s): %s, state=%s",
-                    TAG, name, id, data.optString("message", "unknown reason"),
-                    data.optJSONObject("state")));
-        }
+    // Pass Backend ASR and Video acks to their feature (matched by id prefix), and log the rest
+    private static void onCommandAck(JSONObject obj) throws JSONException {
+        final JSONObject data = obj.getJSONObject("data");
+        final String     id   = data.getString    ("id"  );
+        if      (id.startsWith(BackendSTT        .ID_PREFIX)) { BackendSTT        .onAck(data); }
+        else if (id.startsWith(MediaSocketManager.ID_PREFIX)) { MediaSocketManager.onAck(data); }
+        else if (data.getBoolean("ok"))                       { Log.d(TAG, String.format("%s Command accepted: %s (id=%s)",      TAG, data.get("name"), id                   )); }
+        else                                                  { Log.w(TAG, String.format("%s Command rejected: %s (id=%s): %s", TAG, data.get("name"), id, data.get("message"))); }
     }
 
     // --------------------------------------------------------------------------------

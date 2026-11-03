@@ -7,7 +7,9 @@
 
     <!-- Non-BuddySDK related; this is for our WebSocket chat -->
     <uses-permission android:name="android.permission.INTERNET" />
-    <!-- <uses-permission android:name="android.permission.RECORD_AUDIO" /> -->
+
+    <!-- Backend ASR records the microphone itself (asked on its first button press) -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
     <!-- STT & TTS -->
     <uses-permission android:name="com.bfr.buddy.resource.SPEECH" />

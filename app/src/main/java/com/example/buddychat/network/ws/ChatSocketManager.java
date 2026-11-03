@@ -2,17 +2,24 @@ package com.example.buddychat.network.ws;
 
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Base64;
 import android.util.Log;
 
-import okhttp3.*;
+import androidx.annotation.Nullable;
+
+import okhttp3.HttpUrl;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.WebSocket;
+import org.json.JSONException;
 import org.json.JSONObject;
 
-import com.example.buddychat.network.NetworkUtils;
-import com.example.buddychat.network.BackendURLs;
-
-import com.example.buddychat.network.api.TokenManager;
-
+// From this project
 import com.example.buddychat.chat.StatusController;
+import com.example.buddychat.network.BackendURLs;
+import com.example.buddychat.network.NetworkUtils;
+import com.example.buddychat.network.api.TokenManager;
+import com.example.buddychat.stt.BackendSTT;
 
 // ================================================================================
 // WebSocket Manager
@@ -83,10 +90,11 @@ public final class ChatSocketManager {
     // ================================================================================
     // WebSocket Utility
     // ================================================================================
-    /** Send JSON to the WebSocket safely */
-    public static void sendJson(String json) {
-        if ( SOCKET == null   ) { Log.w(TAG, "Attempted to send message, but Socket is null."); return; }
-        if (!SOCKET.send(json)) { Log.w(TAG, "WebSocket rejected an outbound message."); }
+    // Send one frame; false (with a warning) when there is no socket or it is closing
+    public static boolean sendJson(String json) {
+        if ( SOCKET == null   ) { Log.w(TAG, String.format("%s Attempted to send message, but Socket is null.", TAG)); return false; }
+        if (!SOCKET.send(json)) { Log.w(TAG, String.format("%s WebSocket rejected an outbound message.",         TAG)); return false; }
+        return true;
     }
 
     /** Send one finalized local-ASR result using the primary client protocol. */
@@ -120,4 +128,39 @@ public final class ChatSocketManager {
         }
     }
 
+
+    // ================================================================================
+    // Commands and Microphone Audio
+    // ================================================================================
+    // Send one command (the backend answers each one with a command_ack carrying its id)
+    public static boolean sendCommand(String id, String name, @Nullable JSONObject body) {
+        // put() throws only for a non-finite number, so a JSONException here is a bug
+        final String command;
+        try {
+            command = new JSONObject()
+                .put("type", "command")
+                .put("data", new JSONObject().put("id", id).put("name", name).put("data", (body == null) ? JSONObject.NULL : body))
+                .toString();
+        }
+        catch (JSONException e) { throw new IllegalStateException(e); }
+        return sendJson(command);
+    }
+
+    // Send one chunk of microphone PCM for backend STT (called from BackendSTT's recorder thread)
+    public static boolean sendAudio(byte[] pcm, int length) {
+        // put() throws only for a non-finite number, so a JSONException here is a bug
+        final String frame;
+        try {
+            frame = new JSONObject()
+                .put("type",          "audio_data")
+                .put("data",          Base64.encodeToString(pcm, 0, length, Base64.NO_WRAP))
+                .put("sampleRate",    BackendSTT.SAMPLE_RATE_HZ )
+                .put("channels",      1                         )
+                .put("bitsPerSample", BackendSTT.BITS_PER_SAMPLE)
+                .put("encoding",      "pcm_s16le"               )
+                .toString();
+        }
+        catch (JSONException e) { throw new IllegalStateException(e); }
+        return sendJson(frame);
+    }
 }
